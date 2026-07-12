@@ -265,6 +265,11 @@
           <label for="sel-servicio">Servicio</label>
           <select id="sel-servicio" required></select>
         </div>
+        <!-- Canal de la sesión (solo si el servicio ofrece opciones) -->
+        <div class="form-grupo oculto" id="grupo-canal">
+          <label>¿Cómo prefieres tu sesión?</label>
+          <div class="slots-grid" id="canales" style="justify-content:center"></div>
+        </div>
         <!-- Solo para servicios con hora agendada -->
         <div id="bloque-agendada">
           <div class="form-grupo">
@@ -306,17 +311,10 @@
         <p>Para confirmarla, transfiere el anticipo dentro de las próximas 24 horas:</p>
         <dl class="datos-transfer" id="datos-transfer"></dl>
         <p id="exito-detalle"></p>
-        <div id="bloque-comprobante">
-          <p style="margin-top:1rem"><strong>Sube aquí tu comprobante</strong> (foto o PDF, máx. 8 MB):</p>
-          <div class="form-grupo" style="max-width:420px;margin:.6rem auto">
-            <input type="file" id="in-comprobante" accept="image/jpeg,image/png,image/webp,application/pdf">
-          </div>
-          <button class="btn" id="btn-comprobante" type="button">Enviar comprobante</button>
-          <p class="msg-error oculto" id="msg-error-comp"></p>
-          <p style="font-size:.85rem;margin-top:.8rem">¿Problemas para subirlo? Envíalo por WhatsApp o Instagram
-            <a href="https://www.instagram.com/meta.morfosis2/" target="_blank" rel="noopener">@meta.morfosis2</a>.</p>
-        </div>
-        <p id="comprobante-ok" class="oculto" style="margin-top:1rem">✅ <strong>Comprobante recibido.</strong> Lo revisaremos y te llegará la confirmación a tu correo. ¡Gracias por tu confianza! 🦋</p>
+        <p style="margin-top:1rem"><strong>Último paso:</strong> envíanos tu comprobante por WhatsApp — así quedamos en contacto directo contigo:</p>
+        <a class="btn" id="btn-wsp-comp" target="_blank" rel="noopener" style="margin-top:.4rem">📲 Enviar comprobante por WhatsApp</a>
+        <p style="font-size:.85rem;margin-top:.8rem">¿No usas WhatsApp? Envíalo por Instagram
+          <a href="https://www.instagram.com/meta.morfosis2/" target="_blank" rel="noopener">@meta.morfosis2</a>.</p>
       </div>
 
       <!-- Respaldo si la API aún no está conectada -->
@@ -439,6 +437,12 @@ function renderServicios(){
         <div class="precio"><span class="desde">Inversión: </span>${s.precioTexto}</div>
         ${s.packs ? `<div class="pack">✨ ${s.packs}</div>` : ""}
         <a class="btn secundario agendar-btn" href="#agendar">Agendar</a>`;
+      // El botón preselecciona este servicio en el agendador
+      t.querySelector(".agendar-btn").addEventListener("click", ()=>{
+        const idx = servicios.indexOf(s);
+        const sel = document.getElementById("sel-servicio");
+        if(sel && idx >= 0){ sel.value = String(idx); alCambiarServicio(); }
+      });
       grilla.appendChild(t);
     });
 }
@@ -461,7 +465,8 @@ async function cargarServicios(){
           duracion:Number(f.DuracionMin)||60,
           pctAnticipo:Number(f.PorcentajeAnticipo)||null,
           modalidad:String(f.Modalidad||"").trim().toUpperCase()==="ASINCRONICA" ? "ASINCRONICA" : "AGENDADA",
-          plazoDias:Number(f.PlazoDiasHabiles)||3
+          plazoDias:Number(f.PlazoDiasHabiles)||3,
+          canales:String(f.Canales||"").split(",").map(x=>x.trim().toUpperCase()).filter(Boolean)
         }));
       aviso.textContent = "";
     }catch(e){
@@ -522,7 +527,6 @@ function iniciarAgendador(){
   document.getElementById("sel-servicio").onchange = alCambiarServicio;
   document.getElementById("cal-prev").onclick = ()=>cambiarMes(-1);
   document.getElementById("cal-next").onclick = ()=>cambiarMes(1);
-  document.getElementById("btn-comprobante").onclick = enviarComprobante;
   // Botón flotante de WhatsApp (se activa al poner el número en CONFIG)
   if(CONFIG.WHATSAPP){
     const a = document.createElement("a");
@@ -556,21 +560,67 @@ function servicioSeleccionado(){
   return i==="" ? null : servicios[Number(i)];
 }
 
-/** Ajusta el formulario según la modalidad del servicio elegido */
+/* --- Canales por servicio: AUDIO (asincrónico) / LLAMADA / VIDEOLLAMADA --- */
+let canalElegido = null;
+const ETIQUETAS_CANAL = { AUDIO:"🎧 Audio (respuesta grabada)", LLAMADA:"📞 Llamada", VIDEOLLAMADA:"🎥 Videollamada" };
+
+/** Lista de canales que ofrece un servicio */
+function canalesDe(s){
+  const lista = s.canales || [];
+  if(lista.length > 0) return lista;
+  return s.modalidad === "ASINCRONICA" ? ["AUDIO"] : [];
+}
+
+/** Ajusta el formulario según el servicio elegido */
 function alCambiarServicio(){
   const s = servicioSeleccionado();
-  ocultarError(); slotElegido = null; fechaElegida = null;
+  ocultarError(); slotElegido = null; fechaElegida = null; canalElegido = null;
+  document.getElementById("slots").innerHTML = "";
+  document.getElementById("estado-slots").textContent = "";
+  document.getElementById("bloque-datos").classList.add("oculto");
+  document.getElementById("bloque-agendada").classList.add("oculto");
+  document.getElementById("info-asinc").classList.add("oculto");
+  const grupoCanal = document.getElementById("grupo-canal");
+  grupoCanal.classList.add("oculto");
+  if(!s) return;
+
+  const canales = canalesDe(s);
+  if(canales.length > 1){
+    // El paciente elige cómo quiere su sesión
+    const cont = document.getElementById("canales");
+    cont.innerHTML = "";
+    canales.forEach(c=>{
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "slot-chip";
+      b.textContent = ETIQUETAS_CANAL[c] || c;
+      b.onclick = ()=>{
+        document.querySelectorAll("#canales .slot-chip").forEach(x=>x.classList.remove("elegido"));
+        b.classList.add("elegido");
+        aplicarCanal(s, c);
+      };
+      cont.appendChild(b);
+    });
+    grupoCanal.classList.remove("oculto");
+  }else{
+    aplicarCanal(s, canales[0] || "");
+  }
+}
+
+/** Muestra el flujo asincrónico (audio) o el agendado (llamada/videollamada/por defecto) */
+function aplicarCanal(s, canal){
+  canalElegido = canal || null;
+  slotElegido = null; fechaElegida = null;
   document.getElementById("slots").innerHTML = "";
   document.getElementById("estado-slots").textContent = "";
   document.getElementById("bloque-datos").classList.add("oculto");
   const bAgendada = document.getElementById("bloque-agendada");
   const infoAsinc = document.getElementById("info-asinc");
-  if(!s) return;
-  if(s.modalidad === "ASINCRONICA"){
+
+  if(canal === "AUDIO"){
     bAgendada.classList.add("oculto");
     const anticipo = montoAnticipo(s);
-    infoAsinc.innerHTML = "🎧 <strong>Servicio asincrónico:</strong> no necesitas elegir hora. " +
-      "Recibirás tu respuesta en un <strong>audio</strong> dentro de un máximo de <strong>" +
+    infoAsinc.innerHTML = "🎧 <strong>Modalidad audio:</strong> no necesitas elegir hora. " +
+      "Recibirás tu respuesta grabada dentro de un máximo de <strong>" +
       s.plazoDias + " días hábiles</strong> desde la confirmación de tu anticipo.";
     infoAsinc.classList.remove("oculto");
     document.getElementById("resumen").innerHTML =
@@ -734,7 +784,8 @@ function elegirSlot(hora, boton){
 async function enviarReserva(){
   ocultarError();
   const s = servicioSeleccionado();
-  const esAsinc = s && s.modalidad === "ASINCRONICA";
+  // Asincrónico si el servicio lo es, o si el paciente eligió modalidad AUDIO
+  const esAsinc = s && (s.modalidad === "ASINCRONICA" || canalElegido === "AUDIO");
   const fecha = fechaElegida;
   const nombre = document.getElementById("in-nombre").value.trim();
   const telefono = document.getElementById("in-telefono").value.trim();
@@ -753,7 +804,8 @@ async function enviarReserva(){
       method:"POST",
       body: JSON.stringify({
         accion:"reservar", servicio:s.nombre,
-        modalidad:s.modalidad, plazoDias:s.plazoDias,
+        modalidad: esAsinc ? "ASINCRONICA" : "AGENDADA",
+        plazoDias:s.plazoDias, canal:canalElegido||"",
         fecha: esAsinc ? "" : fecha, hora: esAsinc ? "" : slotElegido,
         duracion:s.duracion, nombre:nombre, telefono:telefono, correo:correo,
         montoAnticipo: anticipo ? "$"+anticipo.toLocaleString("es-CL") : ""
@@ -782,10 +834,21 @@ function mostrarExito(s, fecha, anticipo){
     .filter(f=>f[1] && String(f[1]).toUpperCase()!=="PENDIENTE")
     .map(f=>"<dt>"+f[0]+"</dt><dd>"+f[1]+"</dd>").join("") ||
     "<dd>Te enviaremos los datos de transferencia por mensaje.</dd>";
+  const fueAsinc = (s.modalidad === "ASINCRONICA" || canalElegido === "AUDIO");
   document.getElementById("exito-detalle").innerHTML =
-    (s.modalidad === "ASINCRONICA")
+    fueAsinc
       ? "🎧 Recibirás tu <strong>audio</strong> dentro de un máximo de <strong>" + s.plazoDias + " días hábiles</strong> desde que confirmemos tu anticipo."
-      : "Tu hora: <strong>" + fecha + " a las " + slotElegido + " hrs</strong>.";
+      : "Tu hora: <strong>" + etiquetaFecha(fecha) + " a las " + slotElegido + " hrs</strong>" +
+        (canalElegido ? " por <strong>" + (canalElegido==="VIDEOLLAMADA"?"videollamada":"llamada") + "</strong>" : "") + ".";
+  // Botón de WhatsApp con el mensaje listo (sin mencionar el servicio)
+  const btnWsp = document.getElementById("btn-wsp-comp");
+  if(btnWsp && CONFIG.WHATSAPP){
+    const nombre = document.getElementById("in-nombre").value.trim();
+    const texto = fueAsinc
+      ? "Hola! Soy " + nombre + " 🦋 Acabo de reservar y te envío mi comprobante de transferencia."
+      : "Hola! Soy " + nombre + " 🦋 Acabo de reservar para el " + fecha + " a las " + slotElegido + " hrs y te envío mi comprobante de transferencia.";
+    btnWsp.href = "https://wa.me/" + CONFIG.WHATSAPP.replace(/\D/g,"") + "?text=" + encodeURIComponent(texto);
+  }
   document.getElementById("bloque-exito").classList.remove("oculto");
 }
 
@@ -795,45 +858,9 @@ function mostrarError(txt){
 }
 function ocultarError(){ document.getElementById("msg-error").classList.add("oculto"); }
 
-/* ============================================================
-   COMPROBANTE (Etapa 3) — patrón tanaikech: archivo → base64 → doPost → Drive
-============================================================ */
+/* El comprobante ahora se envía por WhatsApp (botón en la pantalla de éxito).
+   idReserva se conserva por si se necesita en futuras etapas. */
 let idReserva = null;
-
-async function enviarComprobante(){
-  const err = document.getElementById("msg-error-comp");
-  err.classList.add("oculto");
-  const input = document.getElementById("in-comprobante");
-  const file = input.files && input.files[0];
-  const TIPOS = ["image/jpeg","image/png","image/webp","application/pdf"];
-  if(!file){ err.textContent = "Selecciona el archivo de tu comprobante."; err.classList.remove("oculto"); return; }
-  if(TIPOS.indexOf(file.type) === -1){ err.textContent = "Formato no permitido: sube una foto (JPG/PNG) o un PDF."; err.classList.remove("oculto"); return; }
-  if(file.size > 8*1024*1024){ err.textContent = "El archivo pesa más de 8 MB. Envía una foto más liviana."; err.classList.remove("oculto"); return; }
-
-  const btn = document.getElementById("btn-comprobante");
-  btn.disabled = true; btn.textContent = "Enviando…";
-  try{
-    const base64 = await new Promise((res, rej)=>{
-      const fr = new FileReader();
-      fr.onload = ()=>res(String(fr.result).split(",")[1]); // quitar el prefijo data:...;base64,
-      fr.onerror = rej;
-      fr.readAsDataURL(file);
-    });
-    const r = await fetch(API_BASE, {
-      method:"POST",
-      body: JSON.stringify({ accion:"comprobante", idReserva:idReserva,
-        nombreArchivo:file.name, mimeType:file.type, base64:base64 })
-    });
-    const res = await r.json();
-    if(!res.ok){ throw new Error(res.error || "No se pudo enviar."); }
-    document.getElementById("bloque-comprobante").classList.add("oculto");
-    document.getElementById("comprobante-ok").classList.remove("oculto");
-  }catch(e){
-    err.textContent = (e.message || "No pudimos subir el archivo.") + " También puedes enviarlo por WhatsApp o Instagram.";
-    err.classList.remove("oculto");
-    btn.disabled = false; btn.textContent = "Enviar comprobante";
-  }
-}
 
 /* ============ INICIO ============ */
 document.getElementById("anio").textContent = new Date().getFullYear();
