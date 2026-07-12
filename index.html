@@ -90,6 +90,24 @@
   .paso .num{width:44px;height:44px;border-radius:50%;background:var(--verde-mariposa);color:var(--morado-oscuro);font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto .6rem;font-size:1.1rem}
   .paso p{font-size:.85rem}
   .proximamente{display:inline-block;background:var(--amarillo);color:var(--morado-oscuro);font-weight:700;padding:.3rem 1rem;border-radius:999px;font-size:.8rem;margin-bottom:1rem}
+  /* --- Formulario de reserva (Etapa 2) --- */
+  .form-grupo{text-align:left;margin-bottom:1.1rem}
+  .form-grupo label{display:block;font-weight:700;color:var(--morado-oscuro);margin-bottom:.35rem;font-size:.92rem}
+  .form-grupo select,.form-grupo input{width:100%;padding:.65rem .8rem;border:2px solid var(--morado-suave);border-radius:12px;font-family:inherit;font-size:.95rem;background:#fff;color:var(--texto)}
+  .form-grupo select:focus,.form-grupo input:focus{outline:none;border-color:var(--morado)}
+  .slots-grid{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin:1rem 0}
+  .slot-chip{border:2px solid var(--morado-suave);background:#fff;color:var(--morado);padding:.45rem .9rem;border-radius:999px;font-weight:700;font-family:inherit;cursor:pointer}
+  .slot-chip:hover{background:var(--lila-bg)}
+  .slot-chip.elegido{background:var(--morado);border-color:var(--morado);color:#fff}
+  .resumen-reserva{background:var(--lila-bg);border-radius:12px;padding:1rem 1.2rem;text-align:left;font-size:.95rem;margin:1rem 0}
+  .datos-transfer{background:#fff;border:2px dashed var(--morado-suave);border-radius:12px;padding:1rem 1.2rem;text-align:left;margin:1rem 0}
+  .datos-transfer dt{font-weight:700;color:var(--morado-oscuro);font-size:.82rem;text-transform:uppercase;letter-spacing:.5px;margin-top:.5rem}
+  .datos-transfer dd{margin:0}
+  .msg-error{color:#B3261E;font-weight:600;margin-top:.8rem}
+  .consent{display:flex;gap:.5rem;align-items:flex-start;text-align:left;font-size:.85rem;margin-bottom:1.1rem}
+  .consent input{width:auto;margin-top:.25rem}
+  .oculto{display:none !important}
+  .cargando{color:var(--morado-suave);font-weight:600}
 
   /* ============ CONTACTO / FOOTER ============ */
   .contacto .tarjetas-contacto{display:flex;gap:1.4rem;justify-content:center;flex-wrap:wrap}
@@ -112,8 +130,10 @@
 <header>
   <div class="nav">
     <a class="logo" href="#inicio" aria-label="Metamorfosis inicio">
-      <!-- Mariposa (placeholder del logo oficial) -->
-      <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <!-- Logo oficial: guarda la imagen como logo.png junto a este archivo -->
+      <img src="logo.png" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover"
+           onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='block'">
+      <svg id="logo-fallback" style="display:none" viewBox="0 0 64 64" fill="none" aria-hidden="true">
         <path d="M32 18 C20 2 2 8 8 24 C12 36 24 38 30 32" fill="#C6E432" stroke="#6C4BA6" stroke-width="2"/>
         <path d="M32 18 C44 2 62 8 56 24 C52 36 40 38 34 32" fill="#C6E432" stroke="#6C4BA6" stroke-width="2"/>
         <path d="M31 16 Q32 40 32 52" stroke="#4A2F7E" stroke-width="3" stroke-linecap="round"/>
@@ -178,16 +198,64 @@
       <h2>Agenda tu hora</h2>
     </div>
     <div class="agenda-caja">
-      <span class="proximamente">Próximamente en línea</span>
-      <p>Muy pronto podrás reservar aquí mismo eligiendo tu servicio y horario disponible, pagando el anticipo por transferencia y adjuntando tu comprobante. Así funcionará:</p>
       <div class="pasos">
         <div class="paso"><div class="num">1</div><p>Elige tu servicio</p></div>
-        <div class="paso"><div class="num">2</div><p>Selecciona fecha y hora disponible</p></div>
-        <div class="paso"><div class="num">3</div><p>Transfiere el anticipo y adjunta el comprobante</p></div>
-        <div class="paso"><div class="num">4</div><p>Recibe la confirmación de tu cita</p></div>
+        <div class="paso"><div class="num">2</div><p>Fecha y hora disponible</p></div>
+        <div class="paso"><div class="num">3</div><p>Transfiere el anticipo</p></div>
+        <div class="paso"><div class="num">4</div><p>Recibe la confirmación</p></div>
       </div>
-      <p>Mientras tanto, agenda directamente por Instagram:</p>
-      <a class="btn" href="https://www.instagram.com/meta.morfosis2/" target="_blank" rel="noopener">Escríbenos en Instagram</a>
+
+      <!-- Paso 1-2: servicio y fecha -->
+      <form id="form-reserva" onsubmit="return false;">
+        <div class="form-grupo">
+          <label for="sel-servicio">Servicio</label>
+          <select id="sel-servicio" required></select>
+        </div>
+        <!-- Solo para servicios con hora agendada -->
+        <div id="bloque-agendada">
+          <div class="form-grupo">
+            <label for="in-fecha">Fecha</label>
+            <input type="date" id="in-fecha">
+          </div>
+          <button class="btn" id="btn-ver-horas" type="button">Ver horas disponibles</button>
+          <p id="estado-slots" class="cargando" style="margin-top:.8rem"></p>
+          <div class="slots-grid" id="slots"></div>
+        </div>
+        <!-- Solo para servicios asincrónicos (entrega por audio) -->
+        <p id="info-asinc" class="oculto" style="background:var(--lila-bg);border-radius:12px;padding:1rem 1.2rem;text-align:left"></p>
+
+        <!-- Paso 3: datos del cliente (aparece al elegir hora) -->
+        <div id="bloque-datos" class="oculto">
+          <div class="resumen-reserva" id="resumen"></div>
+          <div class="form-grupo"><label for="in-nombre">Nombre completo</label><input type="text" id="in-nombre" required></div>
+          <div class="form-grupo"><label for="in-telefono">Teléfono (WhatsApp)</label><input type="tel" id="in-telefono" placeholder="+56 9 ..." required></div>
+          <div class="form-grupo"><label for="in-correo">Correo</label><input type="email" id="in-correo" required></div>
+          <div class="consent">
+            <input type="checkbox" id="chk-consent" required>
+            <label for="chk-consent">Autorizo el tratamiento de mis datos personales para gestionar esta reserva, conforme a la Ley 21.719.</label>
+          </div>
+          <button class="btn" id="btn-reservar" type="button">Reservar mi hora</button>
+        </div>
+        <p class="msg-error oculto" id="msg-error"></p>
+      </form>
+
+      <!-- Paso 4: confirmación con datos de transferencia -->
+      <div id="bloque-exito" class="oculto">
+        <h3 style="color:var(--morado-oscuro);margin-bottom:.6rem">🦋 ¡Tu hora quedó reservada!</h3>
+        <p>Para confirmarla, transfiere el anticipo dentro de las próximas 24 horas:</p>
+        <dl class="datos-transfer" id="datos-transfer"></dl>
+        <p id="exito-detalle"></p>
+        <p style="margin-top:.8rem">Luego envíanos el comprobante por Instagram
+          <a href="https://www.instagram.com/meta.morfosis2/" target="_blank" rel="noopener">@meta.morfosis2</a>
+          <em>(muy pronto podrás adjuntarlo aquí mismo)</em>.</p>
+      </div>
+
+      <!-- Respaldo si la API aún no está conectada -->
+      <div id="bloque-sin-api" class="oculto">
+        <span class="proximamente">Próximamente en línea</span>
+        <p>Mientras habilitamos la agenda online, reserva directamente por Instagram:</p>
+        <a class="btn" href="https://www.instagram.com/meta.morfosis2/" target="_blank" rel="noopener">Escríbenos en Instagram</a>
+      </div>
     </div>
   </div>
 </section>
@@ -314,7 +382,16 @@ async function cargarServicios(){
       servicios = data
         .filter(f=>String(f.Activo).toUpperCase()!=="NO")
         .sort((a,b)=>(a.Orden||0)-(b.Orden||0))
-        .map(f=>({categoria:f.Categoria, nombre:f.Servicio, descripcion:f.Descripcion, precioTexto:formatearPrecio(f.PrecioTexto), packs:f.Packs||""}));
+        .map(f=>({
+          categoria:f.Categoria, nombre:f.Servicio, descripcion:f.Descripcion,
+          precioTexto:formatearPrecio(f.PrecioTexto), packs:f.Packs||"",
+          // Datos para el agendador (Etapa 2):
+          precioNum:(typeof f.PrecioTexto==="number") ? f.PrecioTexto : (/^\d+$/.test(String(f.PrecioTexto).trim()) ? Number(f.PrecioTexto) : null),
+          duracion:Number(f.DuracionMin)||60,
+          pctAnticipo:Number(f.PorcentajeAnticipo)||null,
+          modalidad:String(f.Modalidad||"").trim().toUpperCase()==="ASINCRONICA" ? "ASINCRONICA" : "AGENDADA",
+          plazoDias:Number(f.PlazoDiasHabiles)||3
+        }));
       aviso.textContent = "";
     }catch(e){
       servicios = SERVICIOS_LOCAL;
@@ -325,6 +402,7 @@ async function cargarServicios(){
   }
   renderFiltros();
   renderServicios();
+  poblarSelectServicios();
 }
 
 /* ============ TESTIMONIOS (Etapa 4 los conecta a Sheets) ============ */
@@ -354,10 +432,201 @@ function renderTestimonios(){
   pinta();
 }
 
+/* ============================================================
+   AGENDADOR (Etapa 2)
+   Usa la misma Web App: ?accion=slots (horas libres desde Calendar),
+   ?accion=config (datos de transferencia) y POST (crear reserva).
+============================================================ */
+const API_BASE = CONFIG.SERVICIOS_URL ? CONFIG.SERVICIOS_URL.split("?")[0] : "";
+let configWeb = null;
+let slotElegido = null;
+
+function iniciarAgendador(){
+  if(!API_BASE){
+    document.getElementById("form-reserva").classList.add("oculto");
+    document.getElementById("bloque-sin-api").classList.remove("oculto");
+    return;
+  }
+  // Rango de fechas permitido
+  const inFecha = document.getElementById("in-fecha");
+  const hoy = new Date();
+  const max = new Date(hoy.getTime() + 60*86400000);
+  inFecha.min = hoy.toISOString().slice(0,10);
+  inFecha.max = max.toISOString().slice(0,10);
+
+  document.getElementById("btn-ver-horas").onclick = buscarHoras;
+  document.getElementById("btn-reservar").onclick = enviarReserva;
+  document.getElementById("sel-servicio").onchange = alCambiarServicio;
+
+  // Config pública (datos de transferencia y % por defecto), en segundo plano
+  fetch(API_BASE + "?accion=config").then(r=>r.json()).then(c=>{ configWeb = c; }).catch(()=>{});
+}
+
+function poblarSelectServicios(){
+  const sel = document.getElementById("sel-servicio");
+  if(!sel) return;
+  sel.innerHTML = '<option value="" disabled selected>Elige un servicio…</option>';
+  servicios.forEach((s,i)=>{
+    const o = document.createElement("option");
+    o.value = i;
+    o.textContent = s.nombre + " — " + s.precioTexto;
+    sel.appendChild(o);
+  });
+}
+
+function servicioSeleccionado(){
+  const i = document.getElementById("sel-servicio").value;
+  return i==="" ? null : servicios[Number(i)];
+}
+
+/** Ajusta el formulario según la modalidad del servicio elegido */
+function alCambiarServicio(){
+  const s = servicioSeleccionado();
+  ocultarError(); slotElegido = null;
+  document.getElementById("slots").innerHTML = "";
+  document.getElementById("estado-slots").textContent = "";
+  document.getElementById("bloque-datos").classList.add("oculto");
+  const bAgendada = document.getElementById("bloque-agendada");
+  const infoAsinc = document.getElementById("info-asinc");
+  if(!s) return;
+  if(s.modalidad === "ASINCRONICA"){
+    bAgendada.classList.add("oculto");
+    const anticipo = montoAnticipo(s);
+    infoAsinc.innerHTML = "🎧 <strong>Servicio asincrónico:</strong> no necesitas elegir hora. " +
+      "Recibirás tu respuesta en un <strong>audio</strong> dentro de un máximo de <strong>" +
+      s.plazoDias + " días hábiles</strong> desde la confirmación de tu anticipo.";
+    infoAsinc.classList.remove("oculto");
+    document.getElementById("resumen").innerHTML =
+      "<strong>" + s.nombre + "</strong><br>" +
+      "🎧 Entrega por audio · máx. " + s.plazoDias + " días hábiles<br>" +
+      "💜 Anticipo para confirmar: <strong>" +
+      (anticipo ? "$" + anticipo.toLocaleString("es-CL") : "por confirmar contigo") + "</strong>";
+    document.getElementById("bloque-datos").classList.remove("oculto");
+  }else{
+    infoAsinc.classList.add("oculto");
+    bAgendada.classList.remove("oculto");
+  }
+}
+
+function montoAnticipo(s){
+  if(!s || !s.precioNum) return null; // precios "Consultar" o con variantes → por confirmar
+  const pct = s.pctAnticipo || (configWeb && Number(configWeb.AnticipoPorcentajeDefault)) || 50;
+  return Math.round(s.precioNum * pct / 100);
+}
+
+async function buscarHoras(){
+  const s = servicioSeleccionado();
+  const fecha = document.getElementById("in-fecha").value;
+  const estado = document.getElementById("estado-slots");
+  const cont = document.getElementById("slots");
+  ocultarError(); slotElegido = null;
+  document.getElementById("bloque-datos").classList.add("oculto");
+  cont.innerHTML = "";
+  if(!s){ mostrarError("Primero elige un servicio."); return; }
+  if(!fecha){ mostrarError("Elige una fecha."); return; }
+  estado.textContent = "Buscando horas disponibles…";
+  try{
+    const r = await fetch(API_BASE + "?accion=slots&fecha=" + fecha + "&duracion=" + s.duracion);
+    const horas = await r.json();
+    estado.textContent = "";
+    if(horas.error){ mostrarError(horas.error); return; }
+    if(horas.length===0){
+      estado.textContent = "No quedan horas para ese día. Prueba otra fecha 🦋";
+      return;
+    }
+    horas.forEach(h=>{
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "slot-chip"; b.textContent = h;
+      b.onclick = ()=>{ elegirSlot(h, b); };
+      cont.appendChild(b);
+    });
+  }catch(e){
+    estado.textContent = "";
+    mostrarError("No pudimos consultar la agenda. Intenta de nuevo en un momento.");
+  }
+}
+
+function elegirSlot(hora, boton){
+  slotElegido = hora;
+  document.querySelectorAll(".slot-chip").forEach(x=>x.classList.remove("elegido"));
+  boton.classList.add("elegido");
+  const s = servicioSeleccionado();
+  const fecha = document.getElementById("in-fecha").value;
+  const anticipo = montoAnticipo(s);
+  document.getElementById("resumen").innerHTML =
+    "<strong>" + s.nombre + "</strong><br>" +
+    "📅 " + fecha + " a las " + hora + " hrs · " + s.duracion + " min<br>" +
+    "💜 Anticipo para confirmar: <strong>" +
+    (anticipo ? "$" + anticipo.toLocaleString("es-CL") : "por confirmar contigo") + "</strong>";
+  document.getElementById("bloque-datos").classList.remove("oculto");
+}
+
+async function enviarReserva(){
+  ocultarError();
+  const s = servicioSeleccionado();
+  const esAsinc = s && s.modalidad === "ASINCRONICA";
+  const fecha = document.getElementById("in-fecha").value;
+  const nombre = document.getElementById("in-nombre").value.trim();
+  const telefono = document.getElementById("in-telefono").value.trim();
+  const correo = document.getElementById("in-correo").value.trim();
+  if(!esAsinc && !slotElegido){ mostrarError("Elige una hora."); return; }
+  if(!nombre || !telefono || !correo){ mostrarError("Completa tu nombre, teléfono y correo."); return; }
+  if(!document.getElementById("chk-consent").checked){ mostrarError("Debes autorizar el tratamiento de tus datos para reservar."); return; }
+
+  const btn = document.getElementById("btn-reservar");
+  btn.disabled = true; btn.textContent = "Reservando…";
+  const anticipo = montoAnticipo(s);
+  try{
+    const r = await fetch(API_BASE, {
+      method:"POST",
+      body: JSON.stringify({
+        accion:"reservar", servicio:s.nombre,
+        modalidad:s.modalidad, plazoDias:s.plazoDias,
+        fecha: esAsinc ? "" : fecha, hora: esAsinc ? "" : slotElegido,
+        duracion:s.duracion, nombre:nombre, telefono:telefono, correo:correo,
+        montoAnticipo: anticipo ? "$"+anticipo.toLocaleString("es-CL") : ""
+      })
+    });
+    const res = await r.json();
+    if(!res.ok){ mostrarError(res.error || "No se pudo reservar."); btn.disabled=false; btn.textContent="Reservar mi hora"; return; }
+    mostrarExito(s, fecha, anticipo);
+  }catch(e){
+    mostrarError("No pudimos enviar tu reserva. Revisa tu conexión e intenta de nuevo.");
+    btn.disabled = false; btn.textContent = "Reservar mi hora";
+  }
+}
+
+function mostrarExito(s, fecha, anticipo){
+  document.getElementById("form-reserva").classList.add("oculto");
+  const dl = document.getElementById("datos-transfer");
+  const c = configWeb || {};
+  const filas = [
+    ["Banco", c.Banco], ["Tipo de cuenta", c.TipoCuenta], ["N° de cuenta", c.NumeroCuenta],
+    ["Titular", c.TitularNombre], ["RUT", c.TitularRut], ["Correo", c.CorreoTransferencias],
+    ["Monto", anticipo ? "$"+anticipo.toLocaleString("es-CL") : "Te lo confirmaremos por mensaje"]
+  ];
+  dl.innerHTML = filas
+    .filter(f=>f[1] && String(f[1]).toUpperCase()!=="PENDIENTE")
+    .map(f=>"<dt>"+f[0]+"</dt><dd>"+f[1]+"</dd>").join("") ||
+    "<dd>Te enviaremos los datos de transferencia por mensaje.</dd>";
+  document.getElementById("exito-detalle").innerHTML =
+    (s.modalidad === "ASINCRONICA")
+      ? "🎧 Recibirás tu <strong>audio</strong> dentro de un máximo de <strong>" + s.plazoDias + " días hábiles</strong> desde que confirmemos tu anticipo."
+      : "Tu hora: <strong>" + fecha + " a las " + slotElegido + " hrs</strong>.";
+  document.getElementById("bloque-exito").classList.remove("oculto");
+}
+
+function mostrarError(txt){
+  const el = document.getElementById("msg-error");
+  el.textContent = txt; el.classList.remove("oculto");
+}
+function ocultarError(){ document.getElementById("msg-error").classList.add("oculto"); }
+
 /* ============ INICIO ============ */
 document.getElementById("anio").textContent = new Date().getFullYear();
 cargarServicios();
 renderTestimonios();
+iniciarAgendador();
 </script>
 </body>
 </html>
