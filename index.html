@@ -623,9 +623,9 @@ async function cargarTestimonios(){
 const TESTIMONIOS_POR_PAGINA = 3;
 
 function renderTestimonios(lista){
-  const cont = document.getElementById(“carrusel-testimonios”);
+  const cont = document.getElementById("carrusel-testimonios");
   if(!lista || lista.length===0){
-    cont.innerHTML = `<div class=”vacio”>\u{1F98B} Muy pronto compartiremos aquí las experiencias de quienes ya vivieron su metamorfosis.</div>`;
+    cont.innerHTML = `<div class="vacio">\u{1F98B} Muy pronto compartiremos aquí las experiencias de quienes ya vivieron su metamorfosis.</div>`;
     return;
   }
   let pagina = 0;
@@ -634,21 +634,21 @@ function renderTestimonios(lista){
     const inicio = pagina * TESTIMONIOS_POR_PAGINA;
     const visibles = lista.slice(inicio, inicio + TESTIMONIOS_POR_PAGINA);
     cont.innerHTML = `
-      <div class=”testimonios-grid”>
+      <div class="testimonios-grid">
         ${visibles.map(t=>`
-          <div class=”testimonio”>
-            <p class=”texto”>”${t.texto}”</p>
-            <p class=”autor”>— ${t.autor}</p>
-          </div>`).join(“”)}
+          <div class="testimonio">
+            <p class="texto">"${t.texto}"</p>
+            <p class="autor">— ${t.autor}</p>
+          </div>`).join("")}
       </div>` +
       (totalPaginas > 1 ? `
-      <div class=”controles”>
-        <button aria-label=”Anteriores” id=”prev”>‹</button>
-        <button aria-label=”Siguientes” id=”next”>›</button>
-      </div>` : “”);
+      <div class="controles">
+        <button aria-label="Anteriores" id="prev">‹</button>
+        <button aria-label="Siguientes" id="next">›</button>
+      </div>` : "");
     if(totalPaginas > 1){
-      document.getElementById(“prev”).onclick = ()=>{ pagina=(pagina-1+totalPaginas)%totalPaginas; pinta(); };
-      document.getElementById(“next”).onclick = ()=>{ pagina=(pagina+1)%totalPaginas; pinta(); };
+      document.getElementById("prev").onclick = ()=>{ pagina=(pagina-1+totalPaginas)%totalPaginas; pinta(); };
+      document.getElementById("next").onclick = ()=>{ pagina=(pagina+1)%totalPaginas; pinta(); };
     }
   };
   pinta();
