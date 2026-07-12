@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Dancing+Script:wght@500;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="favicon.png">
 <style>
   /* ============ PALETA METAMORFOSIS (catálogo 2025-2026) ============ */
   :root{
@@ -130,8 +131,8 @@
 <header>
   <div class="nav">
     <a class="logo" href="#inicio" aria-label="Metamorfosis inicio">
-      <!-- Logo oficial: guarda la imagen como logo.png junto a este archivo -->
-      <img src="logo.png" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover"
+      <!-- Logo oficial -->
+      <img src="logo.png" alt="" style="width:46px;height:46px;filter:drop-shadow(0 2px 6px rgba(108,75,166,.25))"
            onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='block'">
       <svg id="logo-fallback" style="display:none" viewBox="0 0 64 64" fill="none" aria-hidden="true">
         <path d="M32 18 C20 2 2 8 8 24 C12 36 24 38 30 32" fill="#C6E432" stroke="#6C4BA6" stroke-width="2"/>
@@ -157,9 +158,11 @@
 <section class="hero" id="inicio">
   <svg class="camino" style="top:20px;left:4%" width="180" height="120" viewBox="0 0 180 120"><path d="M5 110 C40 10 90 130 120 40 C130 15 165 25 175 5" stroke="#9B7FC7" stroke-width="3" stroke-dasharray="8 9" fill="none" stroke-linecap="round"/></svg>
   <svg class="camino" style="bottom:20px;right:4%" width="180" height="120" viewBox="0 0 180 120"><path d="M175 10 C140 110 90 -10 60 80 C50 105 15 95 5 115" stroke="#9B7FC7" stroke-width="3" stroke-dasharray="8 9" fill="none" stroke-linecap="round"/></svg>
+  <img src="logo.png" alt="Metamorfosis" style="width:min(180px,40vw);margin-bottom:1rem;filter:drop-shadow(0 10px 30px rgba(108,75,166,.30))"
+       onerror="this.style.display='none'">
   <div class="script">Es momento del cambio</div>
   <h1>Metamorfosis</h1>
-  <p>La respuesta está frente a ti… Terapias holísticas y acompañamiento profesional para tu bienestar emocional, energético y el de quienes amas — incluidas tus mascotas.</p>
+  <p>La respuesta está frente a ti… Terapias holísticas y acompañamiento profesional, <strong>100% online</strong>, para tu bienestar emocional, energético y el de quienes amas — incluidas tus mascotas.</p>
   <div class="acciones">
     <a class="btn" href="#agendar">Agenda tu hora</a>
     <a class="btn secundario" href="#servicios">Ver servicios</a>
@@ -214,10 +217,11 @@
         <!-- Solo para servicios con hora agendada -->
         <div id="bloque-agendada">
           <div class="form-grupo">
-            <label for="in-fecha">Fecha</label>
-            <input type="date" id="in-fecha">
+            <label for="in-fecha">Fecha (solo días con horas disponibles)</label>
+            <select id="in-fecha" disabled>
+              <option value="" disabled selected>Primero elige un servicio…</option>
+            </select>
           </div>
-          <button class="btn" id="btn-ver-horas" type="button">Ver horas disponibles</button>
           <p id="estado-slots" class="cargando" style="margin-top:.8rem"></p>
           <div class="slots-grid" id="slots"></div>
         </div>
@@ -278,13 +282,14 @@
       </div>
       <div class="tarjeta-contacto">
         <h3>Modalidad</h3>
-        <p>Sesiones online y presenciales</p>
+        <p>Sesiones 100% online, desde donde estés 🌎</p>
       </div>
     </div>
   </div>
 </section>
 
 <footer>
+  <img src="logo.png" alt="" style="width:56px;margin-bottom:.6rem" onerror="this.style.display='none'">
   <p>© <span id="anio"></span> Metamorfosis · Es momento del cambio 🦋</p>
   <p style="margin-top:.4rem">Tus datos personales se tratan conforme a la Ley 21.719. <a href="#" id="link-privacidad">Aviso de privacidad</a> (próximamente).</p>
 </footer>
@@ -304,7 +309,7 @@ const CONFIG = {
 /* ============ CATÁLOGO LOCAL DE RESPALDO (catálogo 2025-2026) ============ */
 const SERVICIOS_LOCAL = [
   {categoria:"Psicología", nombre:"Sesiones psicológicas", descripcion:"Apoyo consciente y especializado, con enfoque neuroafirmativo y calidad de vida.", precioTexto:"$35.000", packs:"Pack 4 sesiones $135.000 · Pack 5 sesiones $165.000"},
-  {categoria:"Psicología", nombre:"Evaluación integral", descripcion:"Trabajo mixto: entrevistas clínicas, escalas, modalidad online y aplicación presencial.", precioTexto:"Consultar", packs:""},
+  {categoria:"Psicología", nombre:"Evaluación integral", descripcion:"Trabajo mixto: entrevistas clínicas y escalas, en modalidad 100% online.", precioTexto:"Consultar", packs:""},
   {categoria:"Lecturas", nombre:"Lectura de tarot", descripcion:"Sesión terapéutica con guía de tarot de ángeles.", precioTexto:"40 min $16.000 · 1 hora $21.000", packs:""},
   {categoria:"Lecturas", nombre:"Lectura psíquica general", descripcion:"Conexión profunda para comprender energía y emociones.", precioTexto:"$17.000", packs:"Combo con 1 hora de tarot $35.000"},
   {categoria:"Lecturas", nombre:"Lectura psíquica específica", descripcion:"Respuestas específicas a preguntas puntuales (1 a 3 preguntas).", precioTexto:"$14.000", packs:""},
@@ -447,14 +452,7 @@ function iniciarAgendador(){
     document.getElementById("bloque-sin-api").classList.remove("oculto");
     return;
   }
-  // Rango de fechas permitido
-  const inFecha = document.getElementById("in-fecha");
-  const hoy = new Date();
-  const max = new Date(hoy.getTime() + 60*86400000);
-  inFecha.min = hoy.toISOString().slice(0,10);
-  inFecha.max = max.toISOString().slice(0,10);
-
-  document.getElementById("btn-ver-horas").onclick = buscarHoras;
+  document.getElementById("in-fecha").onchange = buscarHoras; // al elegir día, carga sus horas
   document.getElementById("btn-reservar").onclick = enviarReserva;
   document.getElementById("sel-servicio").onchange = alCambiarServicio;
 
@@ -505,7 +503,52 @@ function alCambiarServicio(){
   }else{
     infoAsinc.classList.add("oculto");
     bAgendada.classList.remove("oculto");
+    cargarDiasDisponibles(s);
   }
+}
+
+/** Llena el selector de fechas solo con días que tienen horas libres */
+async function cargarDiasDisponibles(s){
+  const sel = document.getElementById("in-fecha");
+  const estado = document.getElementById("estado-slots");
+  sel.disabled = true;
+  sel.innerHTML = '<option value="" disabled selected>Buscando días disponibles…</option>';
+  estado.textContent = "";
+  try{
+    const r = await fetch(API_BASE + "?accion=dias&duracion=" + s.duracion);
+    const dias = await r.json();
+    if(!Array.isArray(dias) || dias.length===0){
+      sel.innerHTML = '<option value="" disabled selected>Sin días disponibles por ahora</option>';
+      estado.textContent = "No hay horas libres en las próximas semanas. Escríbenos por Instagram 🦋";
+      return;
+    }
+    sel.innerHTML = '<option value="" disabled selected>Elige un día…</option>';
+    dias.forEach(f=>{
+      const o = document.createElement("option");
+      o.value = f;
+      o.textContent = etiquetaFecha(f);
+      sel.appendChild(o);
+    });
+    sel.disabled = false;
+  }catch(e){
+    sel.innerHTML = '<option value="" disabled selected>Error al cargar días</option>';
+    estado.textContent = "No pudimos consultar la agenda. Recarga la página e intenta de nuevo.";
+  }
+}
+
+/** '2026-07-13' → 'lunes 13 de julio' */
+function etiquetaFecha(fechaStr){
+  const p = fechaStr.split("-").map(Number);
+  const d = new Date(p[0], p[1]-1, p[2]);
+  const txt = d.toLocaleDateString("es-CL", {weekday:"long", day:"numeric", month:"long"});
+  return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+
+/** Validaciones de contacto (mismas reglas que el backend) */
+function correoValido(c){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c); }
+function telefonoValido(t){
+  const digitos = String(t).replace(/\D/g, "");
+  return digitos.length >= 8 && digitos.length <= 15;
 }
 
 function montoAnticipo(s){
@@ -571,6 +614,8 @@ async function enviarReserva(){
   const correo = document.getElementById("in-correo").value.trim();
   if(!esAsinc && !slotElegido){ mostrarError("Elige una hora."); return; }
   if(!nombre || !telefono || !correo){ mostrarError("Completa tu nombre, teléfono y correo."); return; }
+  if(!telefonoValido(telefono)){ mostrarError("El teléfono no parece válido. Usa formato +56 9 1234 5678."); return; }
+  if(!correoValido(correo)){ mostrarError("El correo no parece válido. Revísalo (ej: nombre@correo.cl)."); return; }
   if(!document.getElementById("chk-consent").checked){ mostrarError("Debes autorizar el tratamiento de tus datos para reservar."); return; }
 
   const btn = document.getElementById("btn-reservar");
