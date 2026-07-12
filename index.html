@@ -313,15 +313,15 @@
         <p id="exito-detalle"></p>
         <p style="margin-top:1rem"><strong>Último paso:</strong> envíanos tu comprobante por WhatsApp — así quedamos en contacto directo contigo:</p>
         <a class="btn" id="btn-wsp-comp" target="_blank" rel="noopener" style="margin-top:.4rem">📲 Enviar comprobante por WhatsApp</a>
-        <p style="font-size:.85rem;margin-top:.8rem">¿No usas WhatsApp? Envíalo por Instagram
-          <a href="https://www.instagram.com/meta.morfosis2/" target="_blank" rel="noopener">@meta.morfosis2</a>.</p>
+        <p style="font-size:.85rem;margin-top:.8rem">¿Problemas con el botón? Escríbenos directo al
+          <a href="https://wa.me/56930683273" target="_blank" rel="noopener">+56 9 3068 3273</a>.</p>
       </div>
 
       <!-- Respaldo si la API aún no está conectada -->
       <div id="bloque-sin-api" class="oculto">
         <span class="proximamente">Próximamente en línea</span>
-        <p>Mientras habilitamos la agenda online, reserva directamente por Instagram:</p>
-        <a class="btn" href="https://www.instagram.com/meta.morfosis2/" target="_blank" rel="noopener">Escríbenos en Instagram</a>
+        <p>Mientras habilitamos la agenda online, reserva directamente por WhatsApp:</p>
+        <a class="btn" href="https://wa.me/56930683273" target="_blank" rel="noopener">📲 Escríbenos por WhatsApp</a>
       </div>
     </div>
   </div>
@@ -659,7 +659,7 @@ async function cargarDiasDisponibles(s){
       mesVista = new Date(p[0], p[1]-1, 1);
     }else{
       mesVista = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-      estado.textContent = "No hay horas libres en las próximas semanas. Escríbenos por Instagram 🦋";
+      estado.textContent = "No hay horas libres en las próximas semanas. Escríbenos por WhatsApp 🦋";
     }
     renderCalendario();
   }catch(e){
