@@ -344,6 +344,7 @@
         <a class="btn" id="btn-wsp-comp" target="_blank" rel="noopener" style="margin-top:.4rem">📲 Enviar comprobante por WhatsApp</a>
         <p style="font-size:.85rem;margin-top:.8rem">¿Problemas con el botón? Escríbenos directo al
           <a href="https://wa.me/56930683273" target="_blank" rel="noopener">+56 9 3068 3273</a>.</p>
+        <p style="margin-top:1.2rem"><button class="btn secundario" type="button" id="btn-nueva-reserva">Agendar otro servicio</button></p>
       </div>
 
       <!-- Respaldo si la API aún no está conectada -->
@@ -684,6 +685,7 @@ function iniciarAgendador(){
     integrantesExtra = Math.max(0, parseInt(e.target.value, 10) || 0);
     renderResumen();
   };
+  document.getElementById("btn-nueva-reserva").onclick = reiniciarFormularioReserva;
   // Botón flotante de WhatsApp (se activa al poner el número en CONFIG)
   if(CONFIG.WHATSAPP){
     const a = document.createElement("a");
@@ -1106,6 +1108,20 @@ function mostrarExito(s, fecha, total){
     btnWsp.href = "https://wa.me/" + CONFIG.WHATSAPP.replace(/\D/g,"") + "?text=" + encodeURIComponent(texto);
   }
   document.getElementById("bloque-exito").classList.remove("oculto");
+}
+
+/** Vuelve a mostrar el formulario para agendar un servicio nuevo después de una reserva exitosa */
+function reiniciarFormularioReserva(){
+  document.getElementById("bloque-exito").classList.add("oculto");
+  document.getElementById("form-reserva").classList.remove("oculto");
+  document.getElementById("sel-servicio").value = "";
+  document.getElementById("in-nombre").value = "";
+  document.getElementById("in-telefono").value = "+56 9 ";
+  document.getElementById("in-correo").value = "";
+  document.getElementById("chk-consent").checked = false;
+  const btn = document.getElementById("btn-reservar");
+  btn.disabled = false; btn.textContent = "Reservar mi hora";
+  alCambiarServicio(); // limpia variante/canal/hora y oculta los grupos, ya sin servicio elegido
 }
 
 function mostrarError(txt){
