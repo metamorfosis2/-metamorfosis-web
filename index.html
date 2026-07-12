@@ -86,6 +86,16 @@
   .carrusel button{background:var(--morado);color:#fff;border:none;width:38px;height:38px;border-radius:50%;font-size:1.1rem;cursor:pointer}
   .vacio{background:var(--lila-card);border:2px dashed var(--morado-suave);border-radius:var(--radio);padding:2.5rem;text-align:center;color:var(--morado)}
 
+  /* ============ FAQ ============ */
+  .faq-lista{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:.8rem}
+  .faq-item{background:var(--blanco);border-radius:14px;box-shadow:var(--sombra);overflow:hidden}
+  .faq-pregunta{width:100%;display:flex;align-items:center;justify-content:space-between;gap:1rem;background:none;border:none;text-align:left;font-family:inherit;font-weight:700;color:var(--morado-oscuro);font-size:1rem;padding:1.1rem 1.4rem;cursor:pointer}
+  .faq-pregunta .icono{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--lila-bg);color:var(--morado);display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:transform .2s}
+  .faq-item.abierto .faq-pregunta .icono{transform:rotate(45deg)}
+  .faq-respuesta{max-height:0;overflow:hidden;transition:max-height .25s ease}
+  .faq-respuesta p{padding:0 1.4rem 1.2rem;font-size:.95rem}
+  .editar{background:#FCE8B2;padding:.05rem .35rem;border-radius:4px;font-weight:700}
+
   /* ============ AGENDAR ============ */
   .agenda-caja{max-width:700px;margin:0 auto;background:var(--blanco);border-radius:var(--radio);box-shadow:var(--sombra);padding:2.5rem;text-align:center}
   .pasos{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin:2rem 0;text-align:center}
@@ -177,6 +187,7 @@
         <li><a href="#servicios">Servicios</a></li>
         <li><a href="#sobre-mi">Sobre mí</a></li>
         <li><a href="#testimonios">Testimonios</a></li>
+        <li><a href="#faq">Preguntas frecuentes</a></li>
         <li><a href="#contacto">Contacto</a></li>
         <li><a class="btn" href="#agendar">Agenda tu hora</a></li>
       </ul>
@@ -358,6 +369,17 @@
         <a class="btn" href="https://wa.me/56930683273" target="_blank" rel="noopener">📲 Escríbenos por WhatsApp</a>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ==================== FAQ ==================== -->
+<section id="faq">
+  <div class="contenedor">
+    <div class="titulo-seccion">
+      <div class="script">Antes de agendar</div>
+      <h2>Preguntas frecuentes</h2>
+    </div>
+    <div class="faq-lista" id="faq-lista"></div>
   </div>
 </section>
 
@@ -1154,11 +1176,97 @@ function ocultarError(){ document.getElementById("msg-error").classList.add("ocu
    idReserva se conserva por si se necesita en futuras etapas. */
 let idReserva = null;
 
+/* ============================================================
+   FAQ (Fase 5)
+   Ahora se edita desde la hoja "FAQWeb" (columnas: Pregunta, Respuesta,
+   Activo, Orden) — igual que ServiciosWeb. Este arreglo es solo un
+   respaldo local por si la hoja aún no existe o falla la conexión.
+============================================================ */
+const FAQ_LOCAL = [
+  {
+    p: "¿Las sesiones son presenciales?",
+    r: "No, todas nuestras sesiones son 100% online. Según el servicio, se realizan por audio (respuesta grabada), llamada o videollamada."
+  },
+  {
+    p: "¿Cómo se paga?",
+    r: "Por transferencia bancaria, con el 100% del valor por adelantado. Al reservar te mostramos los datos de transferencia; luego nos envías tu comprobante directo por WhatsApp para confirmar tu hora."
+  },
+  {
+    p: "¿Cuánto demora una lectura o limpieza que se entrega por audio?",
+    r: "Se entrega dentro del plazo indicado al momento de reservar (generalmente un máximo de días hábiles desde que confirmamos tu pago). Ese plazo aparece en el resumen de tu reserva antes de confirmar."
+  },
+  {
+    p: "¿Puedo reagendar o cancelar mi hora?",
+    r: "[EDITAR: definir política de reagendamiento y cancelación — por ejemplo, con cuántas horas/días de anticipación se puede reagendar, y si hay devolución en caso de cancelar.]"
+  },
+  {
+    p: "¿Qué pasa si no puedo asistir a mi hora agendada?",
+    r: "[EDITAR: definir qué ocurre si el paciente falta sin aviso — reagendamiento, pérdida del pago, etc.]"
+  },
+  {
+    p: "¿Lo que converso en la sesión es confidencial?",
+    r: "Sí. Toda la información que compartes durante tu sesión se trata con confidencialidad profesional."
+  },
+  {
+    p: "¿Atienden consultas sobre mascotas?",
+    r: "Sí, tenemos lecturas psíquicas, canalización y limpiezas energéticas especialmente para mascotas, todas en modalidad asincrónica (por audio)."
+  },
+  {
+    p: "¿Necesito estar en Chile para agendar?",
+    r: "No, puedes agendar desde cualquier país ya que todo es online. Los horarios disponibles se muestran en hora de Chile."
+  }
+];
+
+/** Trae las preguntas desde FAQWeb (Activo != NO, ordenadas por Orden) */
+async function cargarFAQ(){
+  let lista = FAQ_LOCAL;
+  if(API_BASE){
+    try{
+      const r = await fetch(API_BASE + "?hoja=FAQWeb");
+      const data = await r.json();
+      if(Array.isArray(data) && data.length > 0){
+        const filtradas = data
+          .filter(f => String(f.Activo).toUpperCase() !== "NO")
+          .filter(f => String(f.Pregunta || "").trim() !== "")
+          .sort((a,b) => (Number(a.Orden)||0) - (Number(b.Orden)||0))
+          .map(f => ({ p: String(f.Pregunta || "").trim(), r: String(f.Respuesta || "").trim() }));
+        if(filtradas.length > 0) lista = filtradas;
+      }
+    }catch(e){ /* usa respaldo local */ }
+  }
+  renderFAQ(lista);
+}
+
+function renderFAQ(lista){
+  const cont = document.getElementById("faq-lista");
+  if(!cont) return;
+  cont.innerHTML = lista.map((item, i)=>`
+    <div class="faq-item" id="faq-item-${i}">
+      <button type="button" class="faq-pregunta" aria-expanded="false" aria-controls="faq-resp-${i}">
+        <span>${item.p}</span>
+        <span class="icono" aria-hidden="true">+</span>
+      </button>
+      <div class="faq-respuesta" id="faq-resp-${i}">
+        <p>${item.r}</p>
+      </div>
+    </div>`).join("");
+  cont.querySelectorAll(".faq-pregunta").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const item = btn.closest(".faq-item");
+      const resp = item.querySelector(".faq-respuesta");
+      const abierto = item.classList.toggle("abierto");
+      btn.setAttribute("aria-expanded", abierto ? "true" : "false");
+      resp.style.maxHeight = abierto ? resp.scrollHeight + "px" : null;
+    });
+  });
+}
+
 /* ============ INICIO ============ */
 document.getElementById("anio").textContent = new Date().getFullYear();
 cargarServicios();
 cargarTestimonios();
 iniciarAgendador();
+cargarFAQ();
 document.getElementById("btn-testimonio").onclick = enviarTestimonio;
 </script>
 </body>
