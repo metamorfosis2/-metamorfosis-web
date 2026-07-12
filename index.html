@@ -77,8 +77,9 @@
 
   /* ============ TESTIMONIOS ============ */
   .testimonios{background:var(--blanco)}
-  .carrusel{position:relative;max-width:700px;margin:0 auto;text-align:center}
-  .testimonio{background:var(--lila-card);border-radius:var(--radio);padding:2rem;box-shadow:var(--sombra)}
+  .carrusel{position:relative;max-width:1020px;margin:0 auto;text-align:center}
+  .testimonios-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem;align-items:stretch}
+  .testimonio{background:var(--lila-card);border-radius:var(--radio);padding:2rem;box-shadow:var(--sombra);display:flex;flex-direction:column}
   .testimonio .texto{font-size:1.05rem;font-style:italic}
   .testimonio .autor{margin-top:1rem;font-weight:700;color:var(--morado)}
   .carrusel .controles{display:flex;justify-content:center;gap:1rem;margin-top:1.2rem}
@@ -130,10 +131,13 @@
   .sobre-mi .bio p{margin-bottom:.9rem}
   .credenciales{list-style:none;margin:.8rem 0}
   .credenciales li{padding:.45rem .7rem;background:#fff;border-radius:10px;margin-bottom:.45rem;box-shadow:var(--sombra);font-size:.92rem}
-  .credenciales li::before{content:"🦋 "}
-  /* --- Botón flotante WhatsApp --- */
+  .credenciales li::before{content:"\01F98B "}
+  /* --- Botones flotantes: Instagram (arriba) y WhatsApp (abajo) --- */
   .wsp-btn{position:fixed;bottom:22px;right:22px;z-index:60;background:#25D366;color:#fff;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,.25);text-decoration:none}
   .wsp-btn svg{width:32px;height:32px;fill:#fff}
+  .ig-btn{position:fixed;bottom:92px;right:22px;z-index:60;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,.25);text-decoration:none;
+    background:radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)}
+  .ig-btn svg{width:30px;height:30px}
 
   /* ============ CONTACTO / FOOTER ============ */
   .contacto .tarjetas-contacto{display:flex;gap:1.4rem;justify-content:center;flex-wrap:wrap}
@@ -228,7 +232,7 @@
           <li>[EDITAR: ej. Maestría en Reiki Usui nivel …]</li>
           <li>[EDITAR: ej. Lectura de Registros Akáshicos, certificada por …]</li>
         </ul>
-        <p style="font-size:.9rem;color:var(--morado-suave)">Sesiones 100% online, en un espacio seguro, sin juicios y a tu ritmo 🦋</p>
+        <p style="font-size:.9rem;color:var(--morado-suave)">Sesiones 100% online, en un espacio seguro, sin juicios y a tu ritmo &#x1F98B;</p>
       </div>
     </div>
   </div>
@@ -246,7 +250,7 @@
     <!-- Formulario post-sesión (Etapa 4): se publica solo tras tu aprobación -->
     <div class="agenda-caja" style="margin-top:2.5rem;max-width:600px">
       <h3 style="color:var(--morado-oscuro);margin-bottom:.4rem">Comparte tu experiencia</h3>
-      <p style="font-size:.9rem;margin-bottom:1rem">¿Viviste tu metamorfosis? Tu testimonio puede acompañar a otra persona a dar el paso 🦋</p>
+      <p style="font-size:.9rem;margin-bottom:1rem">¿Viviste tu metamorfosis? Tu testimonio puede acompañar a otra persona a dar el paso &#x1F98B;</p>
       <form id="form-testimonio" onsubmit="return false;">
         <div class="form-grupo">
           <label for="in-t-nombre">Tu nombre (como quieres que aparezca)</label>
@@ -336,7 +340,7 @@
 
       <!-- Paso 4: confirmación con datos de transferencia -->
       <div id="bloque-exito" class="oculto">
-        <h3 style="color:var(--morado-oscuro);margin-bottom:.6rem">🦋 ¡Tu hora quedó reservada!</h3>
+        <h3 style="color:var(--morado-oscuro);margin-bottom:.6rem">&#x1F98B; ¡Tu hora quedó reservada!</h3>
         <p>Para confirmarla, transfiere el total dentro de las próximas 24 horas:</p>
         <dl class="datos-transfer" id="datos-transfer"></dl>
         <p id="exito-detalle"></p>
@@ -383,9 +387,18 @@
 
 <footer>
   <img src="logo.png" alt="" style="width:56px;margin-bottom:.6rem" onerror="this.style.display='none'">
-  <p>© <span id="anio"></span> Metamorfosis · Es momento del cambio 🦋</p>
+  <p>© <span id="anio"></span> Metamorfosis · Es momento del cambio &#x1F98B;</p>
   <p style="margin-top:.4rem">Tus datos personales se tratan conforme a la Ley 21.719. <a href="#" id="link-privacidad">Aviso de privacidad</a> (próximamente).</p>
 </footer>
+
+<!-- Botón flotante Instagram (arriba del de WhatsApp) -->
+<a class="ig-btn" href="https://www.instagram.com/meta.morfosis2/" target="_blank" rel="noopener" aria-label="Síguenos en Instagram">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="6"/>
+    <circle cx="12" cy="12" r="4.2"/>
+    <circle cx="17.4" cy="6.6" r="1.1" fill="#fff" stroke="none"/>
+  </svg>
+</a>
 
 <script>
 /* =================================================================
@@ -607,28 +620,35 @@ async function cargarTestimonios(){
   renderTestimonios(lista);
 }
 
+const TESTIMONIOS_POR_PAGINA = 3;
+
 function renderTestimonios(lista){
-  const cont = document.getElementById("carrusel-testimonios");
+  const cont = document.getElementById(“carrusel-testimonios”);
   if(!lista || lista.length===0){
-    cont.innerHTML = `<div class="vacio">🦋 Muy pronto compartiremos aquí las experiencias de quienes ya vivieron su metamorfosis.</div>`;
+    cont.innerHTML = `<div class=”vacio”>\u{1F98B} Muy pronto compartiremos aquí las experiencias de quienes ya vivieron su metamorfosis.</div>`;
     return;
   }
-  let i = 0;
+  let pagina = 0;
+  const totalPaginas = Math.ceil(lista.length / TESTIMONIOS_POR_PAGINA);
   const pinta = ()=>{
-    const t = lista[i];
+    const inicio = pagina * TESTIMONIOS_POR_PAGINA;
+    const visibles = lista.slice(inicio, inicio + TESTIMONIOS_POR_PAGINA);
     cont.innerHTML = `
-      <div class="testimonio">
-        <p class="texto">“${t.texto}”</p>
-        <p class="autor">— ${t.autor}</p>
+      <div class=”testimonios-grid”>
+        ${visibles.map(t=>`
+          <div class=”testimonio”>
+            <p class=”texto”>”${t.texto}”</p>
+            <p class=”autor”>— ${t.autor}</p>
+          </div>`).join(“”)}
       </div>` +
-      (lista.length > 1 ? `
-      <div class="controles">
-        <button aria-label="Anterior" id="prev">‹</button>
-        <button aria-label="Siguiente" id="next">›</button>
-      </div>` : "");
-    if(lista.length > 1){
-      document.getElementById("prev").onclick = ()=>{ i=(i-1+lista.length)%lista.length; pinta(); };
-      document.getElementById("next").onclick = ()=>{ i=(i+1)%lista.length; pinta(); };
+      (totalPaginas > 1 ? `
+      <div class=”controles”>
+        <button aria-label=”Anteriores” id=”prev”>‹</button>
+        <button aria-label=”Siguientes” id=”next”>›</button>
+      </div>` : “”);
+    if(totalPaginas > 1){
+      document.getElementById(“prev”).onclick = ()=>{ pagina=(pagina-1+totalPaginas)%totalPaginas; pinta(); };
+      document.getElementById(“next”).onclick = ()=>{ pagina=(pagina+1)%totalPaginas; pinta(); };
     }
   };
   pinta();
@@ -641,7 +661,7 @@ async function enviarTestimonio(){
   const texto = document.getElementById("in-t-texto").value.trim();
   msg.style.color = "#B3261E";
   if(!nombre || !texto){ msg.textContent = "Escribe tu nombre y tu experiencia."; return; }
-  if(!API_BASE){ msg.textContent = "El envío no está disponible por ahora. Escríbenos por WhatsApp 🦋"; return; }
+  if(!API_BASE){ msg.textContent = "El envío no está disponible por ahora. Escríbenos por WhatsApp \u{1F98B}"; return; }
   const btn = document.getElementById("btn-testimonio");
   btn.disabled = true; btn.textContent = "Enviando…";
   try{
@@ -652,7 +672,7 @@ async function enviarTestimonio(){
     const res = await r.json();
     if(!res.ok) throw new Error(res.error || "No se pudo enviar.");
     msg.style.color = "var(--morado)";
-    msg.textContent = "🦋 ¡Gracias! Tu testimonio se publicará una vez revisado.";
+    msg.textContent = "\u{1F98B} ¡Gracias! Tu testimonio se publicará una vez revisado.";
     document.getElementById("in-t-nombre").value = "";
     document.getElementById("in-t-texto").value = "";
     btn.textContent = "Enviado ✓";
@@ -921,7 +941,7 @@ async function cargarDiasDisponibles(s){
       mesVista = new Date(p[0], p[1]-1, 1);
     }else{
       mesVista = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-      estado.textContent = "No hay horas libres en las próximas semanas. Escríbenos por WhatsApp 🦋";
+      estado.textContent = "No hay horas libres en las próximas semanas. Escríbenos por WhatsApp \u{1F98B}";
     }
     renderCalendario();
   }catch(e){
@@ -1008,7 +1028,7 @@ async function buscarHoras(){
     estado.textContent = "";
     if(horas.error){ mostrarError(horas.error); return; }
     if(horas.length===0){
-      estado.textContent = "No quedan horas para ese día. Prueba otra fecha 🦋";
+      estado.textContent = "No quedan horas para ese día. Prueba otra fecha \u{1F98B}";
       return;
     }
     horas.forEach(h=>{
