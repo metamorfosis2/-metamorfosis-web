@@ -306,9 +306,17 @@
         <p>Para confirmarla, transfiere el anticipo dentro de las próximas 24 horas:</p>
         <dl class="datos-transfer" id="datos-transfer"></dl>
         <p id="exito-detalle"></p>
-        <p style="margin-top:.8rem">Luego envíanos el comprobante por Instagram
-          <a href="https://www.instagram.com/meta.morfosis2/" target="_blank" rel="noopener">@meta.morfosis2</a>
-          <em>(muy pronto podrás adjuntarlo aquí mismo)</em>.</p>
+        <div id="bloque-comprobante">
+          <p style="margin-top:1rem"><strong>Sube aquí tu comprobante</strong> (foto o PDF, máx. 8 MB):</p>
+          <div class="form-grupo" style="max-width:420px;margin:.6rem auto">
+            <input type="file" id="in-comprobante" accept="image/jpeg,image/png,image/webp,application/pdf">
+          </div>
+          <button class="btn" id="btn-comprobante" type="button">Enviar comprobante</button>
+          <p class="msg-error oculto" id="msg-error-comp"></p>
+          <p style="font-size:.85rem;margin-top:.8rem">¿Problemas para subirlo? Envíalo por WhatsApp o Instagram
+            <a href="https://www.instagram.com/meta.morfosis2/" target="_blank" rel="noopener">@meta.morfosis2</a>.</p>
+        </div>
+        <p id="comprobante-ok" class="oculto" style="margin-top:1rem">✅ <strong>Comprobante recibido.</strong> Lo revisaremos y te llegará la confirmación a tu correo. ¡Gracias por tu confianza! 🦋</p>
       </div>
 
       <!-- Respaldo si la API aún no está conectada -->
@@ -514,6 +522,7 @@ function iniciarAgendador(){
   document.getElementById("sel-servicio").onchange = alCambiarServicio;
   document.getElementById("cal-prev").onclick = ()=>cambiarMes(-1);
   document.getElementById("cal-next").onclick = ()=>cambiarMes(1);
+  document.getElementById("btn-comprobante").onclick = enviarComprobante;
   // Botón flotante de WhatsApp (se activa al poner el número en CONFIG)
   if(CONFIG.WHATSAPP){
     const a = document.createElement("a");
@@ -752,6 +761,7 @@ async function enviarReserva(){
     });
     const res = await r.json();
     if(!res.ok){ mostrarError(res.error || "No se pudo reservar."); btn.disabled=false; btn.textContent="Reservar mi hora"; return; }
+    idReserva = res.id || null;
     mostrarExito(s, fecha, anticipo);
   }catch(e){
     mostrarError("No pudimos enviar tu reserva. Revisa tu conexión e intenta de nuevo.");
@@ -784,6 +794,46 @@ function mostrarError(txt){
   el.textContent = txt; el.classList.remove("oculto");
 }
 function ocultarError(){ document.getElementById("msg-error").classList.add("oculto"); }
+
+/* ============================================================
+   COMPROBANTE (Etapa 3) — patrón tanaikech: archivo → base64 → doPost → Drive
+============================================================ */
+let idReserva = null;
+
+async function enviarComprobante(){
+  const err = document.getElementById("msg-error-comp");
+  err.classList.add("oculto");
+  const input = document.getElementById("in-comprobante");
+  const file = input.files && input.files[0];
+  const TIPOS = ["image/jpeg","image/png","image/webp","application/pdf"];
+  if(!file){ err.textContent = "Selecciona el archivo de tu comprobante."; err.classList.remove("oculto"); return; }
+  if(TIPOS.indexOf(file.type) === -1){ err.textContent = "Formato no permitido: sube una foto (JPG/PNG) o un PDF."; err.classList.remove("oculto"); return; }
+  if(file.size > 8*1024*1024){ err.textContent = "El archivo pesa más de 8 MB. Envía una foto más liviana."; err.classList.remove("oculto"); return; }
+
+  const btn = document.getElementById("btn-comprobante");
+  btn.disabled = true; btn.textContent = "Enviando…";
+  try{
+    const base64 = await new Promise((res, rej)=>{
+      const fr = new FileReader();
+      fr.onload = ()=>res(String(fr.result).split(",")[1]); // quitar el prefijo data:...;base64,
+      fr.onerror = rej;
+      fr.readAsDataURL(file);
+    });
+    const r = await fetch(API_BASE, {
+      method:"POST",
+      body: JSON.stringify({ accion:"comprobante", idReserva:idReserva,
+        nombreArchivo:file.name, mimeType:file.type, base64:base64 })
+    });
+    const res = await r.json();
+    if(!res.ok){ throw new Error(res.error || "No se pudo enviar."); }
+    document.getElementById("bloque-comprobante").classList.add("oculto");
+    document.getElementById("comprobante-ok").classList.remove("oculto");
+  }catch(e){
+    err.textContent = (e.message || "No pudimos subir el archivo.") + " También puedes enviarlo por WhatsApp o Instagram.";
+    err.classList.remove("oculto");
+    btn.disabled = false; btn.textContent = "Enviar comprobante";
+  }
+}
 
 /* ============ INICIO ============ */
 document.getElementById("anio").textContent = new Date().getFullYear();
