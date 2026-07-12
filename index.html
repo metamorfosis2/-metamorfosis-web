@@ -94,8 +94,9 @@
   /* --- Formulario de reserva (Etapa 2) --- */
   .form-grupo{text-align:left;margin-bottom:1.1rem}
   .form-grupo label{display:block;font-weight:700;color:var(--morado-oscuro);margin-bottom:.35rem;font-size:.92rem}
-  .form-grupo select,.form-grupo input{width:100%;padding:.65rem .8rem;border:2px solid var(--morado-suave);border-radius:12px;font-family:inherit;font-size:.95rem;background:#fff;color:var(--texto)}
-  .form-grupo select:focus,.form-grupo input:focus{outline:none;border-color:var(--morado)}
+  .form-grupo select,.form-grupo input,.form-grupo textarea{width:100%;padding:.65rem .8rem;border:2px solid var(--morado-suave);border-radius:12px;font-family:inherit;font-size:.95rem;background:#fff;color:var(--texto)}
+  .form-grupo select:focus,.form-grupo input:focus,.form-grupo textarea:focus{outline:none;border-color:var(--morado)}
+  .form-grupo textarea{min-height:110px;resize:vertical}
   .slots-grid{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin:1rem 0}
   .slot-chip{border:2px solid var(--morado-suave);background:#fff;color:var(--morado);padding:.45rem .9rem;border-radius:999px;font-weight:700;font-family:inherit;cursor:pointer}
   .slot-chip:hover{background:var(--lila-bg)}
@@ -241,6 +242,25 @@
       <h2>Testimonios</h2>
     </div>
     <div class="carrusel" id="carrusel-testimonios"></div>
+
+    <!-- Formulario post-sesión (Etapa 4): se publica solo tras tu aprobación -->
+    <div class="agenda-caja" style="margin-top:2.5rem;max-width:600px">
+      <h3 style="color:var(--morado-oscuro);margin-bottom:.4rem">Comparte tu experiencia</h3>
+      <p style="font-size:.9rem;margin-bottom:1rem">¿Viviste tu metamorfosis? Tu testimonio puede acompañar a otra persona a dar el paso 🦋</p>
+      <form id="form-testimonio" onsubmit="return false;">
+        <div class="form-grupo">
+          <label for="in-t-nombre">Tu nombre (como quieres que aparezca)</label>
+          <input type="text" id="in-t-nombre" maxlength="80">
+        </div>
+        <div class="form-grupo">
+          <label for="in-t-texto">Tu experiencia</label>
+          <textarea id="in-t-texto" maxlength="600" placeholder="Cuéntanos cómo fue tu experiencia…"></textarea>
+        </div>
+        <button class="btn" id="btn-testimonio" type="button">Enviar testimonio</button>
+        <p id="msg-testimonio" style="margin-top:.8rem;font-weight:600"></p>
+        <p style="font-size:.78rem;color:var(--morado-suave);margin-top:.6rem">Tu testimonio se publicará una vez revisado. Al enviarlo autorizas su publicación en este sitio con el nombre indicado.</p>
+      </form>
+    </div>
   </div>
 </section>
 
@@ -294,7 +314,7 @@
         <div id="bloque-datos" class="oculto">
           <div class="resumen-reserva" id="resumen"></div>
           <div class="form-grupo"><label for="in-nombre">Nombre completo</label><input type="text" id="in-nombre" required></div>
-          <div class="form-grupo"><label for="in-telefono">Teléfono (WhatsApp)</label><input type="tel" id="in-telefono" placeholder="+56 9 ..." required></div>
+          <div class="form-grupo"><label for="in-telefono">Teléfono (WhatsApp)</label><input type="tel" id="in-telefono" value="+56 9 " placeholder="+56 9 1234 5678" required></div>
           <div class="form-grupo"><label for="in-correo">Correo</label><input type="email" id="in-correo" required></div>
           <div class="consent">
             <input type="checkbox" id="chk-consent" required>
@@ -481,31 +501,77 @@ async function cargarServicios(){
   poblarSelectServicios();
 }
 
-/* ============ TESTIMONIOS (Etapa 4 los conecta a Sheets) ============ */
-const TESTIMONIOS_LOCAL = []; // se llenará con los históricos que apruebe Metamorfosis
+/* ============ TESTIMONIOS (Etapa 4: conectados a TestimoniosWeb) ============ */
+const TESTIMONIOS_LOCAL = []; // respaldo si la API no responde
 
-function renderTestimonios(){
+/** Trae los testimonios APROBADOS desde la hoja y los muestra */
+async function cargarTestimonios(){
+  let lista = TESTIMONIOS_LOCAL;
+  if(API_BASE){
+    try{
+      const r = await fetch(API_BASE + "?hoja=TestimoniosWeb");
+      const data = await r.json();
+      if(Array.isArray(data) && data.length > 0){
+        lista = data.map(t=>({texto:t.Texto, autor:t.Nombre}));
+      }
+    }catch(e){ /* usa respaldo */ }
+  }
+  renderTestimonios(lista);
+}
+
+function renderTestimonios(lista){
   const cont = document.getElementById("carrusel-testimonios");
-  if(TESTIMONIOS_LOCAL.length===0){
+  if(!lista || lista.length===0){
     cont.innerHTML = `<div class="vacio">🦋 Muy pronto compartiremos aquí las experiencias de quienes ya vivieron su metamorfosis.</div>`;
     return;
   }
   let i = 0;
   const pinta = ()=>{
-    const t = TESTIMONIOS_LOCAL[i];
+    const t = lista[i];
     cont.innerHTML = `
       <div class="testimonio">
         <p class="texto">“${t.texto}”</p>
         <p class="autor">— ${t.autor}</p>
-      </div>
+      </div>` +
+      (lista.length > 1 ? `
       <div class="controles">
         <button aria-label="Anterior" id="prev">‹</button>
         <button aria-label="Siguiente" id="next">›</button>
-      </div>`;
-    document.getElementById("prev").onclick = ()=>{ i=(i-1+TESTIMONIOS_LOCAL.length)%TESTIMONIOS_LOCAL.length; pinta(); };
-    document.getElementById("next").onclick = ()=>{ i=(i+1)%TESTIMONIOS_LOCAL.length; pinta(); };
+      </div>` : "");
+    if(lista.length > 1){
+      document.getElementById("prev").onclick = ()=>{ i=(i-1+lista.length)%lista.length; pinta(); };
+      document.getElementById("next").onclick = ()=>{ i=(i+1)%lista.length; pinta(); };
+    }
   };
   pinta();
+}
+
+/** Envía un testimonio nuevo (queda pendiente de aprobación) */
+async function enviarTestimonio(){
+  const msg = document.getElementById("msg-testimonio");
+  const nombre = document.getElementById("in-t-nombre").value.trim();
+  const texto = document.getElementById("in-t-texto").value.trim();
+  msg.style.color = "#B3261E";
+  if(!nombre || !texto){ msg.textContent = "Escribe tu nombre y tu experiencia."; return; }
+  if(!API_BASE){ msg.textContent = "El envío no está disponible por ahora. Escríbenos por WhatsApp 🦋"; return; }
+  const btn = document.getElementById("btn-testimonio");
+  btn.disabled = true; btn.textContent = "Enviando…";
+  try{
+    const r = await fetch(API_BASE, {
+      method:"POST",
+      body: JSON.stringify({ accion:"testimonio", nombre:nombre, texto:texto })
+    });
+    const res = await r.json();
+    if(!res.ok) throw new Error(res.error || "No se pudo enviar.");
+    msg.style.color = "var(--morado)";
+    msg.textContent = "🦋 ¡Gracias! Tu testimonio se publicará una vez revisado.";
+    document.getElementById("in-t-nombre").value = "";
+    document.getElementById("in-t-texto").value = "";
+    btn.textContent = "Enviado ✓";
+  }catch(e){
+    msg.textContent = (e.message || "No pudimos enviar tu testimonio.") + " Intenta de nuevo.";
+    btn.disabled = false; btn.textContent = "Enviar testimonio";
+  }
 }
 
 /* ============================================================
@@ -865,8 +931,9 @@ let idReserva = null;
 /* ============ INICIO ============ */
 document.getElementById("anio").textContent = new Date().getFullYear();
 cargarServicios();
-renderTestimonios();
+cargarTestimonios();
 iniciarAgendador();
+document.getElementById("btn-testimonio").onclick = enviarTestimonio;
 </script>
 </body>
 </html>
