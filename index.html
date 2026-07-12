@@ -268,14 +268,14 @@
 <section id="agendar">
   <div class="contenedor">
     <div class="titulo-seccion">
-      <div class="script">Reserva con anticipo</div>
+      <div class="script">Reserva con transferencia</div>
       <h2>Agenda tu hora</h2>
     </div>
     <div class="agenda-caja">
       <div class="pasos">
         <div class="paso"><div class="num">1</div><p>Elige tu servicio</p></div>
         <div class="paso"><div class="num">2</div><p>Fecha y hora disponible</p></div>
-        <div class="paso"><div class="num">3</div><p>Transfiere el anticipo</p></div>
+        <div class="paso"><div class="num">3</div><p>Transfiere el total</p></div>
         <div class="paso"><div class="num">4</div><p>Recibe la confirmación</p></div>
       </div>
 
@@ -284,6 +284,11 @@
         <div class="form-grupo">
           <label for="sel-servicio">Servicio</label>
           <select id="sel-servicio" required></select>
+        </div>
+        <!-- Opciones/combos del servicio (duración, combos con otros servicios) -->
+        <div class="form-grupo oculto" id="grupo-variante">
+          <label>Elige una opción</label>
+          <div class="slots-grid" id="variantes" style="justify-content:center"></div>
         </div>
         <!-- Canal de la sesión (solo si el servicio ofrece opciones) -->
         <div class="form-grupo oculto" id="grupo-canal">
@@ -313,6 +318,10 @@
         <!-- Paso 3: datos del cliente (aparece al elegir hora) -->
         <div id="bloque-datos" class="oculto">
           <div class="resumen-reserva" id="resumen"></div>
+          <div class="form-grupo oculto" id="grupo-integrantes">
+            <label for="in-integrantes-extra">Integrantes extra (la base incluye 3 integrantes/mascotas) — $8.000 c/u</label>
+            <input type="number" id="in-integrantes-extra" min="0" step="1" value="0">
+          </div>
           <div class="form-grupo"><label for="in-nombre">Nombre completo</label><input type="text" id="in-nombre" required></div>
           <div class="form-grupo"><label for="in-telefono">Teléfono (WhatsApp)</label><input type="tel" id="in-telefono" value="+56 9 " placeholder="+56 9 1234 5678" required></div>
           <div class="form-grupo"><label for="in-correo">Correo</label><input type="email" id="in-correo" required></div>
@@ -328,7 +337,7 @@
       <!-- Paso 4: confirmación con datos de transferencia -->
       <div id="bloque-exito" class="oculto">
         <h3 style="color:var(--morado-oscuro);margin-bottom:.6rem">🦋 ¡Tu hora quedó reservada!</h3>
-        <p>Para confirmarla, transfiere el anticipo dentro de las próximas 24 horas:</p>
+        <p>Para confirmarla, transfiere el total dentro de las próximas 24 horas:</p>
         <dl class="datos-transfer" id="datos-transfer"></dl>
         <p id="exito-detalle"></p>
         <p style="margin-top:1rem"><strong>Último paso:</strong> envíanos tu comprobante por WhatsApp — así quedamos en contacto directo contigo:</p>
@@ -394,29 +403,93 @@ const CONFIG = {
 const SERVICIOS_LOCAL = [
   {categoria:"Psicología", nombre:"Sesiones psicológicas", descripcion:"Apoyo consciente y especializado, con enfoque neuroafirmativo y calidad de vida.", precioTexto:"$35.000", packs:"Pack 4 sesiones $135.000 · Pack 5 sesiones $165.000"},
   {categoria:"Psicología", nombre:"Evaluación integral", descripcion:"Trabajo mixto: entrevistas clínicas y escalas, en modalidad 100% online.", precioTexto:"Consultar", packs:""},
-  {categoria:"Lecturas", nombre:"Lectura de tarot", descripcion:"Sesión terapéutica con guía de tarot de ángeles.", precioTexto:"40 min $16.000 · 1 hora $21.000", packs:""},
-  {categoria:"Lecturas", nombre:"Lectura psíquica general", descripcion:"Conexión profunda para comprender energía y emociones.", precioTexto:"$17.000", packs:"Combo con 1 hora de tarot $35.000"},
+  {categoria:"Lecturas", nombre:"Lectura de tarot", descripcion:"Sesión terapéutica con guía de tarot de ángeles.", precioTexto:"30 min $13.000 · 1 hora $21.000", packs:""},
+  {categoria:"Lecturas", nombre:"Lectura psíquica general", descripcion:"Conexión profunda para comprender energía y emociones. Asincrónica.", precioTexto:"$17.000", packs:"Combo con 1 hora de tarot (audio, llamada o videollamada) $35.000"},
   {categoria:"Lecturas", nombre:"Lectura psíquica específica", descripcion:"Respuestas específicas a preguntas puntuales (1 a 3 preguntas).", precioTexto:"$14.000", packs:""},
-  {categoria:"Mascotas", nombre:"Lectura psíquica para mascotas", descripcion:"Lectura empática del estado emocional de tu mascota.", precioTexto:"$25.000", packs:"Combo con limpieza energética de mascota $30.000"},
-  {categoria:"Canalización", nombre:"Canalización seres queridos", descripcion:"Mensajes y guías de seres queridos.", precioTexto:"$42.000", packs:"Combo con registros akáshicos $75.000"},
+  {categoria:"Mascotas", nombre:"Lectura psíquica para mascotas", descripcion:"Lectura empática del estado emocional de tu mascota. Asincrónica.", precioTexto:"$25.000", packs:"Combo con limpieza energética de mascota $30.000"},
+  {categoria:"Canalización", nombre:"Canalización seres queridos", descripcion:"Mensajes y guías de seres queridos. 60 min.", precioTexto:"$42.000", packs:"Combo con Registros Akáshicos (90 min) $75.000"},
   {categoria:"Mascotas", nombre:"Canalización de mascotas", descripcion:"Canalización psíquica con mensajes intuitivos para su bienestar.", precioTexto:"$25.000", packs:""},
-  {categoria:"Registros Akáshicos", nombre:"Lectura de Registros Akáshicos", descripcion:"Accedamos a la sabiduría de tu alma.", precioTexto:"$42.000", packs:"Pack con tarot de 40 minutos $55.000"},
+  {categoria:"Registros Akáshicos", nombre:"Lectura de Registros Akáshicos", descripcion:"Accedamos a la sabiduría de tu alma. 60 min.", precioTexto:"$42.000", packs:"Combo con tarot (90 min) $55.000"},
   {categoria:"Registros Akáshicos", nombre:"Iniciación de Registros Akáshicos", descripcion:"Aprende a conectar con los registros y realizar lecturas intuitivas para ti y otros.", precioTexto:"$88.000", packs:"Grupo de 3 a 6 personas: $75.000 c/u"},
-  {categoria:"Limpiezas energéticas", nombre:"Limpieza de campo áurico", descripcion:"Alivio de cargas y protección espiritual.", precioTexto:"$11.000", packs:"Pack de 2 limpiezas $20.000"},
-  {categoria:"Limpiezas energéticas", nombre:"Limpieza energética completa", descripcion:"Disuelve energías densas y bloqueos de chakras; restaura tu equilibrio y eleva tu frecuencia.", precioTexto:"$28.000", packs:"Combo con lectura psíquica $40.000"},
-  {categoria:"Mascotas", nombre:"Limpieza energética para mascotas", descripcion:"Visualizar y remover energías densas y bloqueos. Puede incluir inserción de sentimientos y/o sanación.", precioTexto:"$22.000", packs:"Limpieza de mascota y tutor $40.000"},
+  {categoria:"Limpiezas energéticas", nombre:"Limpieza de campo áurico", descripcion:"Alivio de cargas y protección espiritual.", precioTexto:"$11.000", packs:"2 limpiezas $20.000"},
+  {categoria:"Limpiezas energéticas", nombre:"Limpieza energética completa", descripcion:"Disuelve energías densas y bloqueos de chakras; restaura tu equilibrio y eleva tu frecuencia. 60 min.", precioTexto:"$28.000", packs:"Combo con lectura psíquica general (60 min) $40.000"},
+  {categoria:"Mascotas", nombre:"Limpieza energética para mascotas", descripcion:"Visualizar y remover energías densas y bloqueos. Puede incluir inserción de sentimientos y/o sanación. Asincrónica.", precioTexto:"$22.000", packs:"Combo mascota + tutor $40.000"},
   {categoria:"Limpiezas energéticas", nombre:"Limpieza energética de casa", descripcion:"Limpieza completa del hogar con lectura del campo de energía del lugar, más armonización de 3 integrantes y mascotas.", precioTexto:"$70.000", packs:"Integrante adicional +$8.000"},
   {categoria:"Constelaciones", nombre:"Constelaciones familiares", descripcion:"Sana vínculos y libera patrones heredados.", precioTexto:"$42.000", packs:""},
   {categoria:"Reiki", nombre:"Terapia de reiki a distancia", descripcion:"Busca la armonización. Incluye audio de retroalimentación. Se aconsejan 3 sesiones cada 15 días.", precioTexto:"$29.000", packs:"Pack de 3 sesiones $75.000"},
   {categoria:"ThetaHealing", nombre:"Sesión de ThetaHealing", descripcion:"Terapia intuitiva a través de meditación profunda, enfocada en la liberación emocional desde lo corporal y energético.", precioTexto:"$42.000", packs:""},
-  {categoria:"ThetaHealing", nombre:"Cierre de vínculos amorosos", descripcion:"Terapia intuitiva para cortar lazos y dependencias emocionales con vínculos actuales y del pasado.", precioTexto:"$42.000", packs:"Cierre más limpieza energética $60.000"},
+  {categoria:"ThetaHealing", nombre:"Cierre de vínculos amorosos", descripcion:"Terapia intuitiva para cortar lazos y dependencias emocionales con vínculos actuales y del pasado. 90 min.", precioTexto:"$42.000", packs:"Combo + limpieza energética completa (90 min) $60.000"},
   {categoria:"ThetaHealing", nombre:"Apertura de caminos", descripcion:"Activa oportunidades y propósito.", precioTexto:"$52.000", packs:""}
 ];
+
+/* ============ OPCIONES/COMBOS POR SERVICIO ============
+   Estas reglas mandan por sobre lo que diga la hoja para el cálculo del
+   monto y la duración a agendar (el texto de la tarjeta sí sale de la hoja).
+   "modalidad" y "canales" en una variante pisan los de la hoja para ESA opción. */
+const OPCIONES_SERVICIO = {
+  "Lectura de tarot": {
+    variantes: [
+      { label:"30 min", precio:13000, duracion:30, modalidad:"AGENDADA" },
+      { label:"1 hora", precio:21000, duracion:60, modalidad:"AGENDADA" }
+    ]
+  },
+  "Lectura psíquica general": {
+    variantes: [
+      { label:"Solo lectura (asincrónica)", precio:17000, modalidad:"ASINCRONICA", canales:["AUDIO"] },
+      { label:"Con tarot — 1 hora", precio:35000, duracion:60, modalidad:"AGENDADA", canales:["AUDIO","LLAMADA","VIDEOLLAMADA"] }
+    ]
+  },
+  "Lectura psíquica para mascotas": {
+    variantes: [
+      { label:"Solo lectura", precio:25000, modalidad:"ASINCRONICA", canales:["AUDIO"] },
+      { label:"Combo + limpieza energética de mascota", precio:30000, modalidad:"ASINCRONICA", canales:["AUDIO"] }
+    ]
+  },
+  "Canalización seres queridos": {
+    variantes: [
+      { label:"Canalización — 60 min", precio:42000, duracion:60, modalidad:"AGENDADA" },
+      { label:"Combo + Registros Akáshicos — 90 min", precio:75000, duracion:90, modalidad:"AGENDADA" }
+    ]
+  },
+  "Lectura de Registros Akáshicos": {
+    variantes: [
+      { label:"Registros Akáshicos — 60 min", precio:42000, duracion:60, modalidad:"AGENDADA" },
+      { label:"Combo + Tarot — 90 min", precio:55000, duracion:90, modalidad:"AGENDADA" }
+    ]
+  },
+  "Limpieza de campo áurico": {
+    variantes: [
+      { label:"1 limpieza", precio:11000, modalidad:"AGENDADA" },
+      { label:"2 limpiezas", precio:20000, modalidad:"AGENDADA" }
+    ]
+  },
+  "Limpieza energética completa": {
+    variantes: [
+      { label:"Limpieza completa — 60 min", precio:28000, duracion:60, modalidad:"AGENDADA" },
+      { label:"Combo + Lectura psíquica general — 60 min", precio:40000, duracion:60, modalidad:"AGENDADA" }
+    ]
+  },
+  "Limpieza energética para mascotas": {
+    variantes: [
+      { label:"Solo mascota", precio:22000, modalidad:"ASINCRONICA", canales:["AUDIO"] },
+      { label:"Combo mascota + tutor", precio:40000, modalidad:"ASINCRONICA", canales:["AUDIO"] }
+    ]
+  },
+  "Cierre de vínculos amorosos": {
+    variantes: [
+      { label:"Cierre de vínculos — 90 min", precio:42000, duracion:90, modalidad:"AGENDADA" },
+      { label:"Combo + Limpieza energética completa — 90 min", precio:60000, duracion:90, modalidad:"AGENDADA" }
+    ]
+  },
+  "Limpieza energética de casa": {
+    extraIntegrante: { precio:8000, incluidos:3 }
+  }
+};
 
 /* ============ FORMATO DE PRECIOS ============
    Si la celda de la hoja es un número (ej: 17000), lo muestra como $17.000.
    Si es texto (ej: "40 min $16.000 · 1 hora $21.000" o "Consultar"), lo deja tal cual.
-   Así la hoja guarda NÚMEROS limpios, listos para calcular el % de anticipo. */
+   Así la hoja guarda NÚMEROS limpios, listos para cobrar el 100% del servicio. */
 function formatearPrecio(valor){
   if(valor === null || valor === undefined || valor === "") return "Consultar";
   if(typeof valor === "number" || (/^\d+$/.test(String(valor).trim()))){
@@ -442,6 +515,15 @@ function renderFiltros(){
   });
 }
 
+/** Servicios sin precio fijo ("Consultar"): se coordinan directo por WhatsApp, sin agendar */
+function esConsultar(s){ return s.precioTexto === "Consultar"; }
+
+/** Mensaje genérico de WhatsApp: por regla del negocio, NUNCA menciona el tipo de servicio */
+function enlaceConsultaWsp(){
+  const texto = encodeURIComponent("Hola! Quisiera consultar por uno de sus servicios \u{1F98B}");
+  return "https://wa.me/" + CONFIG.WHATSAPP.replace(/\D/g,"") + "?text=" + texto;
+}
+
 function renderServicios(){
   const grilla = document.getElementById("grilla-servicios");
   grilla.innerHTML = "";
@@ -450,19 +532,24 @@ function renderServicios(){
     .forEach(s=>{
       const t = document.createElement("div");
       t.className = "tarjeta";
+      const consultar = esConsultar(s);
       t.innerHTML = `
         <div class="categoria">${s.categoria}</div>
         <h3>${s.nombre}</h3>
         <p class="desc">${s.descripcion}</p>
         <div class="precio"><span class="desde">Inversión: </span>${s.precioTexto}</div>
         ${s.packs ? `<div class="pack">✨ ${s.packs}</div>` : ""}
-        <a class="btn secundario agendar-btn" href="#agendar">Agendar</a>`;
-      // El botón preselecciona este servicio en el agendador
-      t.querySelector(".agendar-btn").addEventListener("click", ()=>{
-        const idx = servicios.indexOf(s);
-        const sel = document.getElementById("sel-servicio");
-        if(sel && idx >= 0){ sel.value = String(idx); alCambiarServicio(); }
-      });
+        ${consultar
+          ? `<a class="btn secundario agendar-btn" href="${enlaceConsultaWsp()}" target="_blank" rel="noopener">💬 Consultar por WhatsApp</a>`
+          : `<a class="btn secundario agendar-btn" href="#agendar">Agendar</a>`}`;
+      if(!consultar){
+        // El botón preselecciona este servicio en el agendador
+        t.querySelector(".agendar-btn").addEventListener("click", ()=>{
+          const idx = servicios.indexOf(s);
+          const sel = document.getElementById("sel-servicio");
+          if(sel && idx >= 0){ sel.value = String(idx); alCambiarServicio(); }
+        });
+      }
       grilla.appendChild(t);
     });
 }
@@ -476,6 +563,7 @@ async function cargarServicios(){
       // La hoja "Servicios" entrega: Categoria, Servicio, Descripcion, PrecioTexto, Packs, Activo, Orden
       servicios = data
         .filter(f=>String(f.Activo).toUpperCase()!=="NO")
+        .filter(f=>String(f.Servicio||"").trim() !== "") // descarta filas vacías/sobrantes de la hoja
         .sort((a,b)=>(a.Orden||0)-(b.Orden||0))
         .map(f=>({
           categoria:f.Categoria, nombre:f.Servicio, descripcion:f.Descripcion,
@@ -483,7 +571,6 @@ async function cargarServicios(){
           // Datos para el agendador (Etapa 2):
           precioNum:(typeof f.PrecioTexto==="number") ? f.PrecioTexto : (/^\d+$/.test(String(f.PrecioTexto).trim()) ? Number(f.PrecioTexto) : null),
           duracion:Number(f.DuracionMin)||60,
-          pctAnticipo:Number(f.PorcentajeAnticipo)||null,
           modalidad:String(f.Modalidad||"").trim().toUpperCase()==="ASINCRONICA" ? "ASINCRONICA" : "AGENDADA",
           plazoDias:Number(f.PlazoDiasHabiles)||3,
           canales:String(f.Canales||"").split(",").map(x=>x.trim().toUpperCase()).filter(Boolean)
@@ -593,6 +680,10 @@ function iniciarAgendador(){
   document.getElementById("sel-servicio").onchange = alCambiarServicio;
   document.getElementById("cal-prev").onclick = ()=>cambiarMes(-1);
   document.getElementById("cal-next").onclick = ()=>cambiarMes(1);
+  document.getElementById("in-integrantes-extra").oninput = (e)=>{
+    integrantesExtra = Math.max(0, parseInt(e.target.value, 10) || 0);
+    renderResumen();
+  };
   // Botón flotante de WhatsApp (se activa al poner el número en CONFIG)
   if(CONFIG.WHATSAPP){
     const a = document.createElement("a");
@@ -605,7 +696,7 @@ function iniciarAgendador(){
     if(slot) slot.innerHTML = '<a href="'+a.href+'" target="_blank" rel="noopener">Escríbenos</a>';
   }
 
-  // Config pública (datos de transferencia y % por defecto), en segundo plano
+  // Config pública (datos de transferencia), en segundo plano
   fetch(API_BASE + "?accion=config").then(r=>r.json()).then(c=>{ configWeb = c; }).catch(()=>{});
 }
 
@@ -614,6 +705,7 @@ function poblarSelectServicios(){
   if(!sel) return;
   sel.innerHTML = '<option value="" disabled selected>Elige un servicio…</option>';
   servicios.forEach((s,i)=>{
+    if(esConsultar(s)) return; // Estos se coordinan directo por WhatsApp, no se agendan aquí
     const o = document.createElement("option");
     o.value = i;
     o.textContent = s.nombre + " — " + s.precioTexto;
@@ -628,29 +720,130 @@ function servicioSeleccionado(){
 
 /* --- Canales por servicio: AUDIO (asincrónico) / LLAMADA / VIDEOLLAMADA --- */
 let canalElegido = null;
+let varianteElegida = null;   // opción/combo elegido (duración, precio, etc.)
+let integrantesExtra = 0;     // solo Limpieza energética de casa
 const ETIQUETAS_CANAL = { AUDIO:"🎧 Audio (respuesta grabada)", LLAMADA:"📞 Llamada", VIDEOLLAMADA:"🎥 Videollamada" };
 
-/** Lista de canales que ofrece un servicio */
-function canalesDe(s){
-  const lista = s.canales || [];
-  if(lista.length > 0) return lista;
-  return s.modalidad === "ASINCRONICA" ? ["AUDIO"] : [];
+/** Variantes/combos definidos para este servicio (o null si no tiene) */
+function variantesDe(s){
+  const o = OPCIONES_SERVICIO[s.nombre];
+  return (o && o.variantes) ? o.variantes : null;
+}
+
+/** Config de "integrante extra" para este servicio (o null si no aplica) */
+function extraIntegranteConfigDe(s){
+  const o = OPCIONES_SERVICIO[s.nombre];
+  return (o && o.extraIntegrante) ? o.extraIntegrante : null;
+}
+
+/** Combina el servicio base con la variante elegida (si hay) */
+function datosEfectivos(s, variante){
+  const canalesBase = (s.canales && s.canales.length) ? s.canales : (s.modalidad === "ASINCRONICA" ? ["AUDIO"] : []);
+  return {
+    duracion: (variante && variante.duracion) || s.duracion,
+    modalidadBase: (variante && variante.modalidad) || s.modalidad,
+    canales: (variante && variante.canales && variante.canales.length) ? variante.canales : canalesBase
+  };
+}
+
+/** Monto total a pagar (100% del servicio; ya no se cobra anticipo) */
+function montoTotal(s, variante, extra){
+  extra = extra || 0;
+  let base = (variante && typeof variante.precio === "number") ? variante.precio : s.precioNum;
+  if(base === null || base === undefined) return null;
+  const cfgExtra = extraIntegranteConfigDe(s);
+  if(cfgExtra && extra > 0) base += cfgExtra.precio * extra;
+  return base;
+}
+
+/** Reescribe el resumen de la reserva con los datos actuales (variante, canal, hora, integrantes) */
+function renderResumen(){
+  const s = servicioSeleccionado();
+  if(!s) return;
+  const d = datosEfectivos(s, varianteElegida);
+  const esAsinc = (d.modalidadBase === "ASINCRONICA") || canalElegido === "AUDIO";
+  const total = montoTotal(s, varianteElegida, integrantesExtra);
+
+  let linea = "<strong>" + s.nombre + (varianteElegida ? " — " + varianteElegida.label : "") + "</strong><br>";
+  if(esAsinc){
+    linea += "🎧 Entrega por audio · máx. " + s.plazoDias + " días hábiles<br>";
+  }else if(fechaElegida && slotElegido){
+    linea += "📅 " + etiquetaFecha(fechaElegida) + " a las " + slotElegido + " hrs · " + d.duracion + " min" +
+      (canalElegido && canalElegido!=="AUDIO" ? " · " + (canalElegido==="VIDEOLLAMADA"?"Videollamada":"Llamada") : "") + "<br>";
+  }
+  const cfgExtra = extraIntegranteConfigDe(s);
+  if(cfgExtra && integrantesExtra > 0){
+    linea += "➕ " + integrantesExtra + " integrante" + (integrantesExtra>1?"s":"") + " extra ($" +
+      (cfgExtra.precio*integrantesExtra).toLocaleString("es-CL") + ")<br>";
+  }
+  linea += "💜 Total a transferir: <strong>" +
+    (total ? "$" + total.toLocaleString("es-CL") : "por confirmar contigo") + "</strong>";
+  document.getElementById("resumen").innerHTML = linea;
+}
+
+/** Muestra u oculta el stepper de "integrantes extra" (solo Limpieza energética de casa) */
+function actualizarVisibilidadIntegrantes(s){
+  const grupo = document.getElementById("grupo-integrantes");
+  if(extraIntegranteConfigDe(s)){
+    grupo.classList.remove("oculto");
+  }else{
+    grupo.classList.add("oculto");
+    integrantesExtra = 0;
+    const input = document.getElementById("in-integrantes-extra");
+    if(input) input.value = 0;
+  }
 }
 
 /** Ajusta el formulario según el servicio elegido */
 function alCambiarServicio(){
   const s = servicioSeleccionado();
-  ocultarError(); slotElegido = null; fechaElegida = null; canalElegido = null;
+  ocultarError(); slotElegido = null; fechaElegida = null; canalElegido = null; varianteElegida = null; integrantesExtra = 0;
   document.getElementById("slots").innerHTML = "";
   document.getElementById("estado-slots").textContent = "";
   document.getElementById("bloque-datos").classList.add("oculto");
   document.getElementById("bloque-agendada").classList.add("oculto");
   document.getElementById("info-asinc").classList.add("oculto");
-  const grupoCanal = document.getElementById("grupo-canal");
-  grupoCanal.classList.add("oculto");
+  document.getElementById("grupo-canal").classList.add("oculto");
+  document.getElementById("grupo-variante").classList.add("oculto");
+  document.getElementById("grupo-integrantes").classList.add("oculto");
+  const inExtra = document.getElementById("in-integrantes-extra");
+  if(inExtra) inExtra.value = 0;
   if(!s) return;
 
-  const canales = canalesDe(s);
+  const variantes = variantesDe(s);
+  if(variantes && variantes.length > 1){
+    mostrarSelectorVariantes(s, variantes);
+  }else{
+    varianteElegida = (variantes && variantes.length === 1) ? variantes[0] : null;
+    continuarConCanal(s);
+  }
+}
+
+/** Muestra los chips de variante/combo (ej: 30 min / 1 hora, o "solo" vs "combo") */
+function mostrarSelectorVariantes(s, variantes){
+  const grupo = document.getElementById("grupo-variante");
+  const cont = document.getElementById("variantes");
+  cont.innerHTML = "";
+  variantes.forEach(v=>{
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "slot-chip";
+    b.textContent = v.label + " — $" + v.precio.toLocaleString("es-CL");
+    b.onclick = ()=>{
+      document.querySelectorAll("#variantes .slot-chip").forEach(x=>x.classList.remove("elegido"));
+      b.classList.add("elegido");
+      varianteElegida = v;
+      continuarConCanal(s);
+    };
+    cont.appendChild(b);
+  });
+  grupo.classList.remove("oculto");
+}
+
+/** Una vez elegida la variante (si aplica), sigue con el canal (audio/llamada/videollamada) */
+function continuarConCanal(s){
+  const d = datosEfectivos(s, varianteElegida);
+  const canales = d.canales;
+  const grupoCanal = document.getElementById("grupo-canal");
   if(canales.length > 1){
     // El paciente elige cómo quiere su sesión
     const cont = document.getElementById("canales");
@@ -668,6 +861,7 @@ function alCambiarServicio(){
     });
     grupoCanal.classList.remove("oculto");
   }else{
+    grupoCanal.classList.add("oculto");
     aplicarCanal(s, canales[0] || "");
   }
 }
@@ -681,19 +875,18 @@ function aplicarCanal(s, canal){
   document.getElementById("bloque-datos").classList.add("oculto");
   const bAgendada = document.getElementById("bloque-agendada");
   const infoAsinc = document.getElementById("info-asinc");
+  const d = datosEfectivos(s, varianteElegida);
+  const esAsinc = (d.modalidadBase === "ASINCRONICA") || canal === "AUDIO";
 
-  if(canal === "AUDIO"){
+  actualizarVisibilidadIntegrantes(s);
+
+  if(esAsinc){
     bAgendada.classList.add("oculto");
-    const anticipo = montoAnticipo(s);
     infoAsinc.innerHTML = "🎧 <strong>Modalidad audio:</strong> no necesitas elegir hora. " +
       "Recibirás tu respuesta grabada dentro de un máximo de <strong>" +
-      s.plazoDias + " días hábiles</strong> desde la confirmación de tu anticipo.";
+      s.plazoDias + " días hábiles</strong> desde la confirmación de tu pago.";
     infoAsinc.classList.remove("oculto");
-    document.getElementById("resumen").innerHTML =
-      "<strong>" + s.nombre + "</strong><br>" +
-      "🎧 Entrega por audio · máx. " + s.plazoDias + " días hábiles<br>" +
-      "💜 Anticipo para confirmar: <strong>" +
-      (anticipo ? "$" + anticipo.toLocaleString("es-CL") : "por confirmar contigo") + "</strong>";
+    renderResumen();
     document.getElementById("bloque-datos").classList.remove("oculto");
   }else{
     infoAsinc.classList.add("oculto");
@@ -715,7 +908,8 @@ async function cargarDiasDisponibles(s){
   grid.innerHTML = "";
   estado.textContent = "";
   try{
-    const r = await fetch(API_BASE + "?accion=dias&duracion=" + s.duracion);
+    const duracion = datosEfectivos(s, varianteElegida).duracion;
+    const r = await fetch(API_BASE + "?accion=dias&duracion=" + duracion);
     const dias = await r.json();
     diasDisp = new Set(Array.isArray(dias) ? dias : []);
     const hoy = new Date();
@@ -794,12 +988,6 @@ function telefonoValido(t){
   return digitos.length >= 8 && digitos.length <= 15;
 }
 
-function montoAnticipo(s){
-  if(!s || !s.precioNum) return null; // precios "Consultar" o con variantes → por confirmar
-  const pct = s.pctAnticipo || (configWeb && Number(configWeb.AnticipoPorcentajeDefault)) || 50;
-  return Math.round(s.precioNum * pct / 100);
-}
-
 async function buscarHoras(){
   const s = servicioSeleccionado();
   const fecha = fechaElegida;
@@ -812,7 +1000,8 @@ async function buscarHoras(){
   if(!fecha){ mostrarError("Elige una fecha."); return; }
   estado.textContent = "Buscando horas disponibles…";
   try{
-    const r = await fetch(API_BASE + "?accion=slots&fecha=" + fecha + "&duracion=" + s.duracion);
+    const duracion = datosEfectivos(s, varianteElegida).duracion;
+    const r = await fetch(API_BASE + "?accion=slots&fecha=" + fecha + "&duracion=" + duracion);
     const horas = await r.json();
     estado.textContent = "";
     if(horas.error){ mostrarError(horas.error); return; }
@@ -834,85 +1023,86 @@ async function buscarHoras(){
 
 function elegirSlot(hora, boton){
   slotElegido = hora;
-  document.querySelectorAll(".slot-chip").forEach(x=>x.classList.remove("elegido"));
+  document.querySelectorAll("#slots .slot-chip").forEach(x=>x.classList.remove("elegido"));
   boton.classList.add("elegido");
-  const s = servicioSeleccionado();
-  const fecha = fechaElegida;
-  const anticipo = montoAnticipo(s);
-  document.getElementById("resumen").innerHTML =
-    "<strong>" + s.nombre + "</strong><br>" +
-    "📅 " + etiquetaFecha(fecha) + " a las " + hora + " hrs · " + s.duracion + " min<br>" +
-    "💜 Anticipo para confirmar: <strong>" +
-    (anticipo ? "$" + anticipo.toLocaleString("es-CL") : "por confirmar contigo") + "</strong>";
+  renderResumen();
   document.getElementById("bloque-datos").classList.remove("oculto");
 }
 
 async function enviarReserva(){
   ocultarError();
   const s = servicioSeleccionado();
-  // Asincrónico si el servicio lo es, o si el paciente eligió modalidad AUDIO
-  const esAsinc = s && (s.modalidad === "ASINCRONICA" || canalElegido === "AUDIO");
+  const d = datosEfectivos(s, varianteElegida);
+  // Asincrónico si el servicio/variante lo es, o si el paciente eligió canal AUDIO
+  const esAsinc = s && ((d.modalidadBase === "ASINCRONICA") || canalElegido === "AUDIO");
   const fecha = fechaElegida;
   const nombre = document.getElementById("in-nombre").value.trim();
-  const telefono = document.getElementById("in-telefono").value.trim();
+  const telefonoBruto = document.getElementById("in-telefono").value.trim();
   const correo = document.getElementById("in-correo").value.trim();
   if(!esAsinc && !slotElegido){ mostrarError("Elige una hora."); return; }
-  if(!nombre || !telefono || !correo){ mostrarError("Completa tu nombre, teléfono y correo."); return; }
-  if(!telefonoValido(telefono)){ mostrarError("El teléfono no parece válido. Usa formato +56 9 1234 5678."); return; }
+  if(!nombre || !telefonoBruto || !correo){ mostrarError("Completa tu nombre, teléfono y correo."); return; }
+  if(!telefonoValido(telefonoBruto)){ mostrarError("El teléfono no parece válido. Usa formato +56 9 1234 5678."); return; }
   if(!correoValido(correo)){ mostrarError("El correo no parece válido. Revísalo (ej: nombre@correo.cl)."); return; }
   if(!document.getElementById("chk-consent").checked){ mostrarError("Debes autorizar el tratamiento de tus datos para reservar."); return; }
 
+  // Se guarda TODO JUNTO, sin espacios (ej: +56912345678)
+  const telefono = "+" + telefonoBruto.replace(/\D/g,"");
   const btn = document.getElementById("btn-reservar");
   btn.disabled = true; btn.textContent = "Reservando…";
-  const anticipo = montoAnticipo(s);
+  const total = montoTotal(s, varianteElegida, integrantesExtra);
   try{
     const r = await fetch(API_BASE, {
       method:"POST",
       body: JSON.stringify({
         accion:"reservar", servicio:s.nombre,
+        opcion: varianteElegida ? varianteElegida.label : "",
         modalidad: esAsinc ? "ASINCRONICA" : "AGENDADA",
         plazoDias:s.plazoDias, canal:canalElegido||"",
         fecha: esAsinc ? "" : fecha, hora: esAsinc ? "" : slotElegido,
-        duracion:s.duracion, nombre:nombre, telefono:telefono, correo:correo,
-        montoAnticipo: anticipo ? "$"+anticipo.toLocaleString("es-CL") : ""
+        duracion:d.duracion, integrantesExtra: integrantesExtra || 0,
+        nombre:nombre, telefono:telefono, correo:correo,
+        montoAnticipo: total ? "$"+total.toLocaleString("es-CL") : ""
       })
     });
     const res = await r.json();
     if(!res.ok){ mostrarError(res.error || "No se pudo reservar."); btn.disabled=false; btn.textContent="Reservar mi hora"; return; }
     idReserva = res.id || null;
-    mostrarExito(s, fecha, anticipo);
+    mostrarExito(s, fecha, total);
   }catch(e){
     mostrarError("No pudimos enviar tu reserva. Revisa tu conexión e intenta de nuevo.");
     btn.disabled = false; btn.textContent = "Reservar mi hora";
   }
 }
 
-function mostrarExito(s, fecha, anticipo){
+function mostrarExito(s, fecha, total){
   document.getElementById("form-reserva").classList.add("oculto");
   const dl = document.getElementById("datos-transfer");
   const c = configWeb || {};
   const filas = [
     ["Banco", c.Banco], ["Tipo de cuenta", c.TipoCuenta], ["N° de cuenta", c.NumeroCuenta],
     ["Titular", c.TitularNombre], ["RUT", c.TitularRut], ["Correo", c.CorreoTransferencias],
-    ["Monto", anticipo ? "$"+anticipo.toLocaleString("es-CL") : "Te lo confirmaremos por mensaje"]
+    ["Monto", total ? "$"+total.toLocaleString("es-CL") : "Te lo confirmaremos por mensaje"]
   ];
   dl.innerHTML = filas
     .filter(f=>f[1] && String(f[1]).toUpperCase()!=="PENDIENTE")
     .map(f=>"<dt>"+f[0]+"</dt><dd>"+f[1]+"</dd>").join("") ||
     "<dd>Te enviaremos los datos de transferencia por mensaje.</dd>";
-  const fueAsinc = (s.modalidad === "ASINCRONICA" || canalElegido === "AUDIO");
+  const d = datosEfectivos(s, varianteElegida);
+  const fueAsinc = (d.modalidadBase === "ASINCRONICA") || canalElegido === "AUDIO";
   document.getElementById("exito-detalle").innerHTML =
     fueAsinc
-      ? "🎧 Recibirás tu <strong>audio</strong> dentro de un máximo de <strong>" + s.plazoDias + " días hábiles</strong> desde que confirmemos tu anticipo."
+      ? "🎧 Recibirás tu <strong>audio</strong> dentro de un máximo de <strong>" + s.plazoDias + " días hábiles</strong> desde que confirmemos tu pago."
       : "Tu hora: <strong>" + etiquetaFecha(fecha) + " a las " + slotElegido + " hrs</strong>" +
         (canalElegido ? " por <strong>" + (canalElegido==="VIDEOLLAMADA"?"videollamada":"llamada") + "</strong>" : "") + ".";
-  // Botón de WhatsApp con el mensaje listo (sin mencionar el servicio)
+  // Botón de WhatsApp con el mensaje listo (sin mencionar el servicio).
+  // Se usa \u{1F98B} (escape unicode) en vez del emoji literal para evitar que
+  // se corrompa (rombo con "?") si el archivo se guarda/copia con otra codificación.
   const btnWsp = document.getElementById("btn-wsp-comp");
   if(btnWsp && CONFIG.WHATSAPP){
     const nombre = document.getElementById("in-nombre").value.trim();
     const texto = fueAsinc
-      ? "Hola! Soy " + nombre + " 🦋 Acabo de reservar y te envío mi comprobante de transferencia."
-      : "Hola! Soy " + nombre + " 🦋 Acabo de reservar para el " + fecha + " a las " + slotElegido + " hrs y te envío mi comprobante de transferencia.";
+      ? "Hola! Soy " + nombre + " \u{1F98B} Acabo de reservar y te envío mi comprobante de transferencia."
+      : "Hola! Soy " + nombre + " \u{1F98B} Acabo de reservar para el " + fecha + " a las " + slotElegido + " hrs y te envío mi comprobante de transferencia.";
     btnWsp.href = "https://wa.me/" + CONFIG.WHATSAPP.replace(/\D/g,"") + "?text=" + encodeURIComponent(texto);
   }
   document.getElementById("bloque-exito").classList.remove("oculto");
