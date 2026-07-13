@@ -47,9 +47,6 @@
 
   /* ============ HERO ============ */
   .hero{position:relative;overflow:hidden;text-align:center;padding:6rem 1.2rem 7rem}
-  .hero::before,.hero::after{content:"";position:absolute;border-radius:50%;filter:blur(2px);opacity:.55;z-index:0;pointer-events:none}
-  .hero::before{width:380px;height:380px;background:radial-gradient(circle at 30% 30%,#E4D9FA,var(--verde-mariposa) 140%);top:-150px;left:-130px}
-  .hero::after{width:300px;height:300px;background:radial-gradient(circle at 60% 40%,var(--rosa),var(--morado-suave) 140%);bottom:-110px;right:-90px}
   .hero .script,.hero h1,.hero p,.hero .acciones,.hero img{position:relative;z-index:1}
   .hero .script{font-family:'Dancing Script',cursive;font-size:clamp(2rem,5vw,3.2rem);color:var(--morado-suave)}
   .hero h1{font-size:clamp(2.4rem,6vw,4rem);color:var(--morado-oscuro);letter-spacing:-.5px;margin:.3rem 0 .8rem}
@@ -72,6 +69,9 @@
   .hilo-testimonios{bottom:0;left:-35px;width:160px;transform:rotate(200deg)}
   .hilo-faq-1{top:-10px;right:-35px;width:130px;color:var(--rosa);transform:rotate(-35deg)}
   .hilo-contacto{bottom:-15px;left:-40px;width:150px;transform:rotate(120deg)}
+  .hilo-hero-1{top:20px;left:-30px;width:160px;transform:rotate(-25deg)}
+  .hilo-hero-2{bottom:10px;right:-30px;width:180px;color:var(--rosa);transform:rotate(150deg)}
+  .hilo-agendar{top:-10px;right:-30px;width:170px;color:var(--rosa);transform:rotate(-30deg)}
   @media(max-width:760px){.hilo{display:none}}
 
   /* ============ SERVICIOS ============ */
@@ -82,6 +82,7 @@
   .grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.4rem}
   .tarjeta{background:rgba(255,255,255,.65);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.6);border-radius:var(--radio);padding:1.7rem;box-shadow:0 18px 40px rgba(108,75,166,.12);display:flex;flex-direction:column;transition:transform .25s,box-shadow .25s}
   .tarjeta:hover{transform:translateY(-6px);box-shadow:0 24px 50px rgba(108,75,166,.2)}
+  .tarjeta .icono{width:52px;height:52px;border-radius:18px;background:linear-gradient(135deg,var(--verde-mariposa),var(--morado-suave));display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.1rem}
   .tarjeta .categoria{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--morado-suave);margin-bottom:.4rem}
   .tarjeta h3{color:var(--morado-oscuro);font-size:1.15rem;margin-bottom:.5rem}
   .tarjeta .desc{font-size:.95rem;flex:1}
@@ -97,7 +98,6 @@
   .testimonios-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem;align-items:stretch}
   .testimonio{background:var(--lila-card);border-radius:var(--radio);padding:2rem;box-shadow:var(--sombra);display:flex;flex-direction:column;transition:transform .25s,box-shadow .25s}
   .testimonio:hover{transform:translateY(-4px);box-shadow:0 20px 42px rgba(108,75,166,.16)}
-  .testimonio .icono{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,var(--verde-mariposa),var(--morado-suave));display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:.9rem}
   .testimonio::before{content:"\201C";font-family:'Dancing Script',cursive;font-size:3.2rem;line-height:1;color:var(--verde-mariposa);margin-bottom:-.4rem}
   .testimonio .texto{font-size:1.05rem;font-style:italic}
   .testimonio .autor{margin-top:1rem;font-weight:700;color:var(--morado)}
@@ -118,7 +118,6 @@
 
   /* ============ AGENDAR ============ */
   #agendar{position:relative;overflow:hidden}
-  #agendar::before{content:"";position:absolute;width:340px;height:340px;border-radius:50%;filter:blur(2px);opacity:.4;z-index:0;pointer-events:none;background:radial-gradient(circle at 40% 40%,var(--rosa),var(--morado-suave) 140%);top:-120px;right:-110px}
   #agendar .contenedor{position:relative;z-index:1}
   .agenda-caja{max-width:700px;margin:0 auto;background:var(--blanco);border-radius:var(--radio);box-shadow:0 20px 48px rgba(108,75,166,.16);padding:2.5rem;text-align:center}
   .pasos{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin:2rem 0;text-align:center}
@@ -220,6 +219,8 @@
 
 <!-- ==================== HERO ==================== -->
 <section class="hero" id="inicio">
+  <svg class="hilo hilo-hero-1" viewBox="0 0 150 150" aria-hidden="true"><path d="M10 140 C 40 100, 10 60, 60 50 C 110 40, 90 10, 140 10"/></svg>
+  <svg class="hilo hilo-hero-2" viewBox="0 0 150 150" aria-hidden="true"><path d="M10 140 C 40 100, 10 60, 60 50 C 110 40, 90 10, 140 10"/></svg>
   <img src="logo.png" alt="Metamorfosis" style="width:min(180px,40vw);margin-bottom:1rem;filter:drop-shadow(0 10px 30px rgba(108,75,166,.30))"
        onerror="this.style.display='none'">
   <div class="script">Es momento del cambio</div>
@@ -306,6 +307,7 @@
 
 <!-- ==================== AGENDAR ==================== -->
 <section id="agendar">
+  <svg class="hilo hilo-agendar" viewBox="0 0 150 150" aria-hidden="true"><path d="M10 140 C 40 100, 10 60, 60 50 C 110 40, 90 10, 140 10"/></svg>
   <div class="contenedor">
     <div class="titulo-seccion">
       <div class="script">Reserva con transferencia</div>
@@ -587,6 +589,20 @@ function enlaceConsultaWsp(){
   return "https://wa.me/" + CONFIG.WHATSAPP.replace(/\D/g,"") + "?text=" + texto;
 }
 
+/** Ícono decorativo por categoría (badge con degradado en cada tarjeta) */
+const ICONOS_CATEGORIA = {
+  "Psicología": "🧠",
+  "Lecturas": "🔮",
+  "Mascotas": "🐾",
+  "Canalización": "💫",
+  "Registros Akáshicos": "✨",
+  "Limpiezas energéticas": "🦋",
+  "Constelaciones": "🌳",
+  "Reiki": "🖐️",
+  "ThetaHealing": "🧘"
+};
+function iconoDeCategoria(categoria){ return ICONOS_CATEGORIA[categoria] || "🌙"; }
+
 function renderServicios(){
   const grilla = document.getElementById("grilla-servicios");
   grilla.innerHTML = "";
@@ -597,6 +613,7 @@ function renderServicios(){
       t.className = "tarjeta";
       const consultar = esConsultar(s);
       t.innerHTML = `
+        <div class="icono">${iconoDeCategoria(s.categoria)}</div>
         <div class="categoria">${s.categoria}</div>
         <h3>${s.nombre}</h3>
         <p class="desc">${s.descripcion}</p>
@@ -686,7 +703,6 @@ function renderTestimonios(lista){
       <div class="testimonios-grid">
         ${visibles.map(t=>`
           <div class="testimonio">
-            <div class="icono">💜</div>
             <p class="texto">"${t.texto}"</p>
             <p class="autor">— ${t.autor}</p>
           </div>`).join("")}
